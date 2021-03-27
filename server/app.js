@@ -3,9 +3,10 @@ const bodyParser = require("body-parser");
 const router = require("./routes");
 const app = express();
 
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.json());
-app.use(router)
+app.use(router);
 
 // error handling
 app.use((error, req, res, next) => {

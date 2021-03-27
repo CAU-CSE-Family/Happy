@@ -1,9 +1,9 @@
-require('dotenv').config()
-const { PORT } = process.env
+require('dotenv').config();
+const PORT = process.env.PORT || 8000;
+const app = require('./app');
 const http = require("http");
-const app = require('./app')
-const server = http.createServer(app);
 const mongoose = require("mongoose");
+const server = http.createServer(app);
 
 const MONGO_URL = "mongodb+srv://root:root@happycluster.ehdqt.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 
@@ -15,8 +15,8 @@ const MONGO_URL = "mongodb+srv://root:root@happycluster.ehdqt.mongodb.net/myFirs
       useFindAndModify: false,
       useCreateIndex: true,
     });
-
     console.log("DB CONNECTED");
+      
     server.listen(PORT, () =>
       console.log("Server is listening on ${PORT}")
     );
