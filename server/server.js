@@ -6,7 +6,7 @@ const server   = http.createServer(app);
 
 (async function () {
   try {
-    await mongoose.connect(process.env.MONGO_URL, {
+    await mongoose.connect('mongodb://localhost:27017/node-login', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       useFindAndModify: false,
