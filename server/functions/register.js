@@ -1,7 +1,8 @@
 const user = require('../models/user');
 const bcrypt = require('bcryptjs');
 
-exports.registerUser = (name, password, phone, email) => 
+exports.registerUser = (name, password, phone, email) =>
+
   new Promise((resolve,reject) => {
     const salt = bcrypt.genSaltSync(10);
 	const hash = bcrypt.hashSync(password, salt);
