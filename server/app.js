@@ -1,12 +1,16 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const router = require("./routes");
-const app = express();
+const express = require('express');
+const app     = express();
+const router  = express.Router();
+const logger  = require('morgan');
+const bodyParser = require('body-parser');
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
 app.use(express.json());
-app.use(router);
+app.use(logger('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+require('./routes/routes')(router);
+app.use('/api/v1', router);
 
 // error handling
 app.use((error, req, res, next) => {
