@@ -1,4 +1,3 @@
-const path    = require('path')
 const express = require('express')
 const dotenv  = require('dotenv')
 const morgan  = require('morgan')
@@ -38,7 +37,6 @@ app.use(function (req, res, next) {
   res.locals.user = req.user || null
   next()
 })
-app.use(express.static(path.join(__dirname, 'public'))) // Static folder
 
 // Routes
 app.use('/', require('./routes/index'))
