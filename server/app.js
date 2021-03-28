@@ -1,24 +1,50 @@
-const express = require('express');
-const app     = express();
-const router  = express.Router();
-const logger  = require('morgan');
-const bodyParser = require('body-parser');
+const path    = require('path')
+const express = require('express')
+const dotenv  = require('dotenv')
+const morgan  = require('morgan')
+const connectDB = require('./config/db')
+const passport  = require('passport')
+const session   = require('express-session')
+const app = express()
 
-app.use(express.json());
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+dotenv.config({ path: './config/config.env' }) // Load config
 
-require('./routes/routes')(router);
-app.use('/api/v1', router);
+connectDB() // connect to MongoDB
 
-// error handling
-app.use((error, req, res, next) => {
-  const { statusCode, message } = error;
-  const status = statusCode || 500;
-  error.statusCode = statusCode || 500;
-  console.log(error);
-  res.status(status).json({ message });
-});
+require('./config/passport')(passport) // Passport config
+app.use(passport.initialize()) // Passport middleware
+app.use(passport.session())
 
-module.exports = app;
+// Body parser
+app.use(express.urlencoded({ extended: false }))
+app.use(express.json())
+
+// Logging for dev
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'))
+}
+
+// Sessions
+app.use(
+  session({
+    secret: 'Happy',
+    resave: false,
+    saveUninitialized: false,
+  })
+)
+
+// Set global var
+app.use(function (req, res, next) {
+  res.locals.user = req.user || null
+  next()
+})
+app.use(express.static(path.join(__dirname, 'public'))) // Static folder
+
+// Routes
+app.use('/', require('./routes/index'))
+app.use('/auth', require('./routes/auth'))
+
+const PORT = process.env.PORT || 3000
+app.listen(PORT,
+  console.log(`Server running on port ${PORT}`)
+)

@@ -1,31 +1,29 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
-const userSchema = mongoose.Schema({
-  name: {
+const UserSchema = new mongoose.Schema({
+  googleId: {
     type: String,
     required: true,
   },
-  hashed_password: {
+  displayName: {
     type: String,
     required: true,
   },
-  phone: {
-    type: String,
-    required: true,
-    unique: 1,
-  },
-  email: {
+  firstName: {
     type: String,
     required: true,
   },
-  temp_password: {
-      type: String,
+  lastName: {
+    type: String,
+    required: true,
   },
-  temp_password_time: {
-      type: String,
+  image: {
+    type: String,
   },
-});
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+})
 
-mongoose.Promise = global.Promise;
-
-module.exports = mongoose.model('user', userSchema);
+module.exports = mongoose.model('User', UserSchema)
