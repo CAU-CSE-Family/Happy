@@ -1,4 +1,5 @@
 const rand       = require("../rand.js")
+const axios      = require('axios');
 const express    = require('express')
 const formidable = require('formidable')
 const cache      = require('memory-cache')
@@ -20,23 +21,26 @@ router.post('/', (req, res, next) => {
   cache.put(phoneNumber, authNumber, vaildTime)
   res.send(vaildTime.toString())
 
-  request({
-      method: 'POST',
-      json: true,
-      uri: 'https://api-sens.ncloud.com/v1/sms/services/${process.env.SENS_SERVICEID}/messages',
-      headers: {
-        'Content-Type': 'application/json',
+  try {
+    axios.post(
+      'https://api-sens.ncloud.com/v1/sms/services/${process.env.SENS_SERVICEID}/messages',
+      {
         'X-NCP-auth-key': process.env.SENS_ACCESSKEYID,
         'X-NCP-service-secret': process.env.SENS_SERVICESECRET
       },
-      body: {
+      {
         type: 'sms',
         from: process.env.SENS_SENDNUMBER,
         to: ['${phoneNumber}'],
-        content: '[magnis] 인증번호 [${authNumber}]를 입력해주세요.'
+        content: '[Happy] 인증번호 [${authNumber}]를 입력해주세요.'
       }
-    })
-})
+    )
+    return res.end('인증번호 요청 성공')
+  } catch (err) {
+    cache.del(phoneNumber)
+    throw err
+  }
+});
 
 router.post('/verify', (req, res, next) => {
   var form = new formidable.IncomingForm()
@@ -60,4 +64,4 @@ router.post('/verify', (req, res, next) => {
   })
 })
 
-module.exports = router
+module.exports = router;
