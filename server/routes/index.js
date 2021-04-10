@@ -1,30 +1,63 @@
-const express = require('express')
-const router = express.Router()
-const { ensureAuth, ensureGuest } = require('../middleware/auth')
+const rand       = require("../rand.js")
+const express    = require('express')
+const formidable = require('formidable')
+const cache      = require('memory-cache')
+const router     = express.Router()
+//const { ensureAuth, ensureGuest } = require('../middleware/auth')
 
+router.get('/', (req, res) => {
+  res.render('main')
+})
 
-// @desc    Login/Landing page
-// @route   GET /
-router.get('/', ensureGuest, (req, res) => {
-  res.render('login', {
-    layout: 'login',
+router.post('/', (req, res, next) => {
+  const phoneNumber = req.body.phoneNumber
+  const vaildTime = 1800000; //30 minutes
+  const authNumber = rand.authNo(6)
+  
+  if (cache.get(phoneNumber)) {
+    cache.del(phoneNumber)
+  }
+  cache.put(phoneNumber, authNumber, vaildTime)
+  res.send(vaildTime.toString())
+
+  request({
+      method: 'POST',
+      json: true,
+      uri: 'https://api-sens.ncloud.com/v1/sms/services/${process.env.SENS_SERVICEID}/messages',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-NCP-auth-key': process.env.SENS_ACCESSKEYID,
+        'X-NCP-service-secret': process.env.SENS_SERVICESECRET
+      },
+      body: {
+        type: 'sms',
+        from: process.env.SENS_SENDNUMBER,
+        to: ['${phoneNumber}'],
+        content: '[magnis] 인증번호 [${authNumber}]를 입력해주세요.'
+      }
+    })
+})
+
+router.post('/verify', (req, res, next) => {
+  var form = new formidable.IncomingForm()
+  form.parse(req, (err, body) => {
+    const phoneNumber = body.phoneNumber
+    const authNumber = body.authNumber
+
+    if (!cache.get(phoneNumber)) {
+      console.log("Time out")
+      res.end("<h1>유효 시간 초과</h1>")
+    }
+    else if (cache.get(phoneNumber) == authNumber) {
+      console.log('Sucess verified')
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
+      res.end("인증완료")
+    }
+    else {
+      console.log("not verified")
+      res.end("<h1>잘못된 요청</h1>")
+    }
   })
 })
 
-/*
-// @desc    Dashboard
-// @route   GET /dashboard
-router.get('/dashboard', ensureAuth, async (req, res) => {
-  try {
-    const stories = await Story.find({ user: req.user.id }).lean()
-    res.render('dashboard', {
-      name: req.user.firstName,
-      stories,
-    })
-  } catch (err) {
-    console.error(err)
-    res.render('error/500')
-  }
-})
-*/
 module.exports = router

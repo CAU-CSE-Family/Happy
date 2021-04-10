@@ -1,19 +1,35 @@
 const path    = require('path')
 const dotenv  = require('dotenv')
 const morgan  = require('morgan')
+
 const express = require('express')
+const app = express()
+
+const cookieParser = require('cookie-parser');
 const passport  = require('passport')
 const session   = require('express-session')
 const connectDB = require('./config/db')
-const app = express()
 
 dotenv.config({ path: './config/config.env' }) // Load config
 
 connectDB() // connect to MongoDB
 
+// View ejs
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+app.engine('html', require('ejs').renderFile);
+
 require('./config/passport')(passport) // Passport config
 app.use(passport.initialize()) // Passport middleware
 app.use(passport.session())
+
+// Static folder
+app.use(express.static(path.join(__dirname, 'public'))) 
+// Set global var
+app.use(function (req, res, next) {
+  res.locals.user = req.user || null
+  next()
+})
 
 // Body parser
 app.use(express.urlencoded({ extended: false }))
@@ -27,18 +43,15 @@ if (process.env.NODE_ENV === 'development') {
 // Sessions
 app.use(
   session({
-    secret: 'Happy',
-    resave: false,
+    secret: process.env.COOKIE_SECRET,
     saveUninitialized: false,
+    resave: false,
+    cookie: {
+      httpOnly: true,
+      secure: false,
+    },
   })
 )
-
-// Set global var
-app.use(function (req, res, next) {
-  res.locals.user = req.user || null
-  next()
-})
-app.use(express.static(path.join(__dirname, 'public'))) // Static folder
 
 // Routes
 app.use('/', require('./routes/index'))
@@ -48,3 +61,5 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT,
   console.log(`Server running on port ${PORT}`)
 )
+
+module.exports = app
