@@ -1,9 +1,10 @@
-const express = require('express')
+const path    = require('path')
 const dotenv  = require('dotenv')
 const morgan  = require('morgan')
-const connectDB = require('./config/db')
+const express = require('express')
 const passport  = require('passport')
 const session   = require('express-session')
+const connectDB = require('./config/db')
 const app = express()
 
 dotenv.config({ path: './config/config.env' }) // Load config
@@ -37,6 +38,7 @@ app.use(function (req, res, next) {
   res.locals.user = req.user || null
   next()
 })
+app.use(express.static(path.join(__dirname, 'public'))) // Static folder
 
 // Routes
 app.use('/', require('./routes/index'))
