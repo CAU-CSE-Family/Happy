@@ -1,3 +1,4 @@
+/*
 authSms = () => {
     const phoneNumber = { "phoneNumber": document.auth_form.phone_number.value }
 
@@ -17,7 +18,7 @@ authSms = () => {
         console.log(result)
         const vaildTime = result
      
-        countdown("viewtimer", "timer", Number(vaildTime))
+        
     })
 }
 
@@ -35,9 +36,7 @@ authNumber = () => {
     formData.append('phoneNumber', phoneNumber)
     formData.append('authNumber', authNumber)
 
-    if (!authNumber) {
-        return alert('인증번호를 입력하지 않았습니다.')
-    }
+    
     fetch('/verify', {
         method: 'post',
         body: formData
@@ -63,7 +62,7 @@ authNumber = () => {
 
     })
 }
-
+*/
 countdown = (elementName, divName, vaildTime) => {
     let element, endTime, secs, mins, msLeft, time, div
     twoDigits = (n) => { return (n <= 9 ? "0" + n : n) }
@@ -93,3 +92,5 @@ countdown = (elementName, divName, vaildTime) => {
     endTime = (+new Date) + vaildTime + 500
     updateTimer()
 }
+
+module.exports = countdown
