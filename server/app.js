@@ -2,6 +2,7 @@ const path    = require('path')
 const dotenv  = require('dotenv')
 const morgan  = require('morgan')
 const express = require('express')
+const index  = require('./routes/index')
 const app = express()
 
 const passport  = require('passport')
@@ -30,8 +31,9 @@ app.use(function (req, res, next) {
 })
 
 // Body parser
-app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
+app.use(express.urlencoded())
+app.use(express.multipart())
 
 // Logging for dev
 if (process.env.NODE_ENV === 'development') {
@@ -52,9 +54,9 @@ app.use(
 )
 
 // Routes
-app.use('/', require('./routes/index'))
-app.use('/requestSmsCode', require('./routes/index'))
-app.use('/requestVerify', require('./routes/index'))
+app.use('/', index)
+app.use('/requestSmsCode', index)
+app.use('/requestVerify', index)
 app.use('/auth', require('./routes/auth'))
 
 app.set('PORT', process.env.PORT || 3000)

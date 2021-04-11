@@ -13,14 +13,14 @@ router.get('/', (req, res) => {
 router.post('/requestSmsCode', (req, res, next) => {
   const phoneNumber = req.body.phone
   const authNumber = rand.authNo(6)
+  const vaildTime = 180000 //3 Minutes
 
   if (cache.get(phoneNumber)) {
     cache.del(phoneNumber)
   }
   cache.put(phoneNumber, authNumber, vaildTime)
 
-  const vaildTime = 180000; //3 minutes
-  timer.countdown(Number(vaildTime))
+  //timer.countdown(Number(vaildTime))
 
   try {
     axios.post(
