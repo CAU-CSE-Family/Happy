@@ -63,32 +63,24 @@ authNumber = () => {
     })
 }
 */
-countdown = (elementName, divName, vaildTime) => {
-    let element, endTime, secs, mins, msLeft, time, div
+countdown = (vaildTime) => {
+    let endTime, secs, mins, msLeft, time, div
     twoDigits = (n) => { return (n <= 9 ? "0" + n : n) }
     updateTimer = () => {
         msLeft = endTime - (+new Date)
         if (msLeft < 1000) {
-            div.innerHTML = "시간 초과"
+            return alert('시간 초과')
         } else {
             time = new Date(msLeft)
             mins = time.getUTCMinutes()
             secs = time.getUTCSeconds()
             msgTime = (mins ? mins + '분' + twoDigits(secs) : secs) + '초'
-            var msg = "남은 시간: " + msgTime
-
-            div.innerHTML = msg
+            var msg = '남은 시간: ' + msgTime
             setTimeout(updateTimer, time.getUTCMilliseconds() + 500)
+
+            return alert(msg)
         }
     }
-    element = document.getElementById(elementName)
-    if (element.hasChildNodes()) {
-        element.removeChild(document.getElementById(divName))
-    }
-    div = document.createElement("div")
-    div.setAttribute("id", divName)
-    element.appendChild(div)
-
     endTime = (+new Date) + vaildTime + 500
     updateTimer()
 }

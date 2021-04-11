@@ -53,11 +53,13 @@ app.use(
 
 // Routes
 app.use('/', require('./routes/index'))
+app.use('/requestSmsCode', require('./routes/index'))
+app.use('/requestVerify', require('./routes/index'))
 app.use('/auth', require('./routes/auth'))
 
 app.set('PORT', process.env.PORT || 3000)
-app.listen(PORT,
-  console.log(`Server running on port ${PORT}`)
-)
+app.listen(app.get('PORT'), function() {
+  console.log('Server running on port ' + app.get('PORT'))
+})
 
 module.exports = app
