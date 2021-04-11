@@ -22,25 +22,38 @@ router.post('/requestSmsCode', (req, res, next) => {
 
   //timer.countdown(Number(vaildTime))
 
-  try {
-    axios.post(
-      'https://api-sens.ncloud.com/v1/sms/services/${process.env.SENS_SERVICEID}/messages',
-      {
-        'X-NCP-auth-key': process.env.SENS_ACCESSKEYID,
-        'X-NCP-service-secret': process.env.SENS_SERVICESECRET
-      },
-      {
-        type: 'sms',
-        from: process.env.SENS_SENDNUMBER,
-        to: [phoneNumber],
-        content: '[Happy] 인증번호 ${authNumber}를 입력해주세요. 인증번호의 유효시간은 3분입니다.'
-      }
-    )
-    return res.json({"result": True})
-  } catch (err) {
-    cache.del(phoneNumber)
-    throw err
-  }
+  axios({
+    method: 'POST',
+    json: true,
+    url = 'https://api-sens.ncloud.com/v1/sms/services/${process.env.SENS_SERVICEID}/messages',
+    headers: {
+      'Content-Type': 'application.json',
+      'x-ncp-iam-access-key': process.env.SENS_ACCESSKEYID,
+      'x-ncp-apigw-timestamp': Date.now().toString(),
+      'x-ncp-apigw-signature-v2': process.env.SENS_SERVICESECRET,
+    },
+    data: {
+      type: 'SMS',
+      contentType: 'COMM',
+      countryCode: '82',
+      from: process.env.SENS_SENDNUMBER,
+      content: '[Happy] 인증번호 ${authNumber}를 입력해주세요. 인증번호의 유효시간은 3분입니다.',
+      messages: [
+        { to: '${phoneNumber}', },
+      ],
+    },
+  })
+  .then(function (res) {
+    console.log('Response: ', res.data, res['data'])
+    res.json({result: true})
+  })
+  .catch((err) => {
+    console.log(err.res)
+    if (err.res == undefined) {
+      res.json({result: true})
+    }
+    else res.json({result: false})
+  })
 });
 
 router.post('/requestVerify', (req, res, next) => {

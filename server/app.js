@@ -2,7 +2,8 @@ const path    = require('path')
 const dotenv  = require('dotenv')
 const morgan  = require('morgan')
 const express = require('express')
-const index  = require('./routes/index')
+const index   = require('./routes/index')
+
 const app = express()
 
 const passport  = require('passport')
@@ -32,8 +33,7 @@ app.use(function (req, res, next) {
 
 // Body parser
 app.use(express.json())
-app.use(express.urlencoded())
-app.use(express.multipart())
+app.use(express.urlencoded({ extended: false }))
 
 // Logging for dev
 if (process.env.NODE_ENV === 'development') {
