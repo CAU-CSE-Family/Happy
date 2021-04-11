@@ -2,26 +2,16 @@ const path    = require('path')
 const dotenv  = require('dotenv')
 const morgan  = require('morgan')
 const express = require('express')
-const index   = require('./routes/index')
+const app     = express()
 
-const app = express()
-
-const passport  = require('passport')
-const session   = require('express-session')
-const connectDB = require('./config/db')
+const passport   = require('passport')
+const session    = require('express-session')
+const connectDB  = require('./config/db')
+const controller = require('./routes/controller')
 
 dotenv.config({ path: './config/config.env' }) // Load config
 
 connectDB() // connect to MongoDB
-
-// View ejs
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-app.engine('html', require('ejs').renderFile);
-
-require('./config/passport')(passport) // Passport config
-app.use(passport.initialize()) // Passport middleware
-app.use(passport.session())
 
 // Static folder
 app.use(express.static(path.join(__dirname, 'public'))) 
@@ -33,7 +23,17 @@ app.use(function (req, res, next) {
 
 // Body parser
 app.use(express.json())
-app.use(express.urlencoded({ extended: false }))
+app.use(express.urlencoded({ extended: true }))
+
+// View ejs
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+app.engine('html', require('ejs').renderFile);
+
+// Passport config
+require('./config/passport')(passport) 
+app.use(passport.initialize()) // Passport middleware
+app.use(passport.session())
 
 // Logging for dev
 if (process.env.NODE_ENV === 'development') {
@@ -53,11 +53,14 @@ app.use(
   })
 )
 
-// Routes
-app.use('/', index)
-app.use('/requestSmsCode', index)
-app.use('/requestVerify', index)
 app.use('/auth', require('./routes/auth'))
+
+app.get('/', (req, res) => {
+  res.render('main')
+})
+
+app.post('/requestSmsCode', controller.requestSmsCode)
+app.post('/requestVerify', controller.requestVerify)
 
 app.set('PORT', process.env.PORT || 3000)
 app.listen(app.get('PORT'), function() {

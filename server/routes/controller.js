@@ -1,13 +1,13 @@
-const rand       = require("../public/rand.js")
-const timer      = require("../public/main.js")
-const axios      = require('axios')
-const cache      = require('memory-cache')
-const cryptoJs   = require('crypto-js')
+const rand      = require("../public/rand.js")
+const timer     = require("../public/main.js")
+const axios     = require('axios')
+const cache     = require('memory-cache')
+const cryptoJs  = require('crypto-js')
 
 const date      = Date.now().toString()
-const uri       = '${process.env.SENS_SERVICEID}'
-const secretKey = '${process.env.SENS_SERVICESECRET}'
-const accessKey = '${process.env.SENS_ACCESSKEYID}'
+const uri       = `${process.env.SENS_SERVICEID}`
+const secretKey = `${process.env.SENS_SERVICESECRET}`
+const accessKey = `${process.env.SENS_ACCESSKEYID}`
 const method    = 'POST'
 const space     = ' '
 const newLine   = '\n'
@@ -41,7 +41,7 @@ exports.requestSmsCode = async function (req, res) {
   axios({
     method: method,
     json: true,
-    url = url,
+    url: url,
     headers: {
       'Content-Type': 'application.json',
       'x-ncp-iam-access-key': accessKey,
@@ -96,7 +96,3 @@ exports.requestVerify = async function (req, res) {
     res.end('잘못된 요청')
   }
 }
-
-
-  
-
