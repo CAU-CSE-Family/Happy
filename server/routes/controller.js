@@ -20,13 +20,13 @@ hmac.update(space)
 hmac.update(url2)
 hmac.update(newLine)
 hmac.update(date)
-hmac.update(newLine)
 hmac.update(accessKey)
 
 const hash = hmac.finalize()
 const signature = hash.toString(cryptoJs.enc.Base64)
 
 exports.requestSmsCode = async function (req, res) {
+  console.log(req)
   const phoneNumber = req.body.phone
   const authNumber = rand.authNo(6)
   const vaildTime = 180000 //3 Minutes
@@ -41,21 +41,21 @@ exports.requestSmsCode = async function (req, res) {
   axios({
     method: method,
     json: true,
-    url: url,
+    uri: url,
     headers: {
-      'Content-Type': 'application.json',
+      'Content-Type': 'application.json; charset=utf-8',
       'x-ncp-iam-access-key': accessKey,
       'x-ncp-apigw-timestamp': date,
       'x-ncp-apigw-signature-v2': signature,
     },
-    data: {
-      type: 'SMS',
-      contentType: 'COMM',
-      countryCode: '82',
-      from: `${process.env.SENS_SENDNUMBER}`,
-      content: `[Happy] 인증번호 ${authNumber}를 입력해주세요. 인증번호의 유효시간은 3분입니다.`,
-      messages: [
-        { to: `${phoneNumber}`, },
+    body: {
+      'type': 'SMS',
+      'contentType': 'COMM',
+      'countryCode': '82',
+      'from': `${process.env.SENS_SENDNUMBER}`,
+      'content': `[Happy] 인증번호 ${authNumber}를 입력해주세요. 인증번호의 유효시간은 3분입니다.`,
+      'messages': [
+        { 'to': `${phoneNumber}`, },
       ],
     },
   })
