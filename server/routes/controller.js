@@ -1,4 +1,4 @@
-//const timer   = require("../public/main.js")
+//const timer   = require("../public/timer.js")
 const rand      = require("../public/rand.js")
 const axios     = require('axios')
 const cache     = require('memory-cache')

@@ -54,10 +54,6 @@ app.use(
 
 app.use('/auth', require('./routes/auth'))
 
-app.get('/', (req, res) => {
-  res.render('main')
-})
-
 app.post('/requestSmsCode', controller.send)
 app.post('/requestVerify', controller.verify)
 
