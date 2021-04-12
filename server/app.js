@@ -1,15 +1,14 @@
 const path    = require('path')
 const dotenv  = require('dotenv')
+dotenv.config({ path: './config/config.env' }) // Load config
+
 const morgan  = require('morgan')
 const express = require('express')
 const app     = express()
-
 const passport   = require('passport')
 const session    = require('express-session')
 const connectDB  = require('./config/db')
 const controller = require('./routes/controller')
-
-dotenv.config({ path: './config/config.env' }) // Load config
 
 connectDB() // connect to MongoDB
 
@@ -59,10 +58,10 @@ app.get('/', (req, res) => {
   res.render('main')
 })
 
-app.post('/requestSmsCode', controller.requestSmsCode)
-app.post('/requestVerify', controller.requestVerify)
+app.post('/requestSmsCode', controller.send)
+app.post('/requestVerify', controller.verify)
 
-app.set('PORT', process.env.PORT || 3000)
+app.set('PORT', process.env.PORT || 5000)
 app.listen(app.get('PORT'), function() {
   console.log('Server running on port ' + app.get('PORT'))
 })
