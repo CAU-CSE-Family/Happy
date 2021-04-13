@@ -2,15 +2,15 @@ const path    = require('path')
 const dotenv  = require('dotenv')
 dotenv.config({ path: './config/config.env' }) // Load config
 
+const passport   = require('passport')
+const session    = require('express-session')
 const morgan  = require('morgan')
 const express = require('express')
 const app     = express()
-const passport   = require('passport')
-const session    = require('express-session')
-const connectDB  = require('./config/db')
-const controller = require('./routes/controller')
 
-connectDB() // connect to MongoDB
+// connect to MongoDB
+const connectDB  = require('./config/db')
+connectDB() 
 
 // Static folder
 app.use(express.static(path.join(__dirname, 'public'))) 
@@ -24,7 +24,7 @@ app.use(function (req, res, next) {
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// View ejs
+// View ejs - not use now
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.engine('html', require('ejs').renderFile);
@@ -45,17 +45,10 @@ app.use(
     secret: process.env.COOKIE_SECRET,
     saveUninitialized: false,
     resave: false,
-    cookie: {
-      httpOnly: true,
-      secure: false,
-    },
   })
 )
 
 app.use('/auth', require('./routes/auth'))
-
-app.post('/requestSmsCode', controller.send)
-app.post('/requestVerify', controller.verify)
 
 app.set('PORT', process.env.PORT || 5000)
 app.listen(app.get('PORT'), function() {

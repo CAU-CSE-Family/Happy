@@ -48,7 +48,7 @@ exports.send = async function (req, res) {
       contentType: "COMM",
       countryCode: "82",
       from: `${process.env.SENS_SENDNUMBER}`,
-      content: `인증번호 ${authNumber}를 입력해주세요.`,
+      content: `[Happy] 인증번호 ${authNumber}를 입력해주세요.`,
       messages: [
         { to: `${phoneNumber}` }
       ]
@@ -65,7 +65,7 @@ exports.send = async function (req, res) {
     res.json({result: true})
   })
   .catch((response) => {
-    console.log(response)
+    // console.log(response)
     console.log(response.status)
     if (response.data == undefined) {
       res.json({result: true})
