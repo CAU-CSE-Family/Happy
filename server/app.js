@@ -4,7 +4,6 @@ dotenv.config({ path: './config/config.env' }) // Load config
 
 const morgan  = require('morgan')
 const express = require('express')
-const session = require('express-session')
 const app     = express()
 
 
@@ -23,15 +22,6 @@ app.use(function (req, res, next) {
 // Body parser
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-
-// Sessions
-app.use(
-  session({
-    secret: process.env.COOKIE_SECRET,
-    saveUninitialized: true,
-    resave: true,
-  })
-)
 
 // Logging for dev
 if (process.env.NODE_ENV === 'development') {

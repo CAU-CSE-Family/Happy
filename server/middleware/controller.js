@@ -12,6 +12,10 @@ const secretKey = `${process.env.SENS_SERVICESECRET}`
 const accessKey = `${process.env.SENS_ACCESSKEYID}`
 const url       = `https://sens.apigw.ntruss.com/sms/v2/services/${encodeURIComponent(uri)}/messages`
 
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID
+)
+
 function makeSignature(serviceId, timeStamp, accessKey, secretKey) {
   const method    = 'POST'
   const space     = ' '
@@ -31,6 +35,16 @@ function makeSignature(serviceId, timeStamp, accessKey, secretKey) {
   return hash.toString(cryptoJs.enc.Base64)
 }
 
+function makeid(length) {
+  var result           = [];
+  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  var charactersLength = characters.length
+  for ( var i = 0; i < length; i++ ) {
+    result.push(characters.charAt(Math.floor(Math.random() * charactersLength)))
+ }
+ return result.join('')
+}
+
 exports.send = async function (req, res) {
   console.log(req.body)
   const phoneNumber = req.body.phone
@@ -42,7 +56,7 @@ exports.send = async function (req, res) {
   }
   cache.put(phoneNumber, authNumber, vaildTime)
 
-  timer.countdown(Number(vaildTime))
+  // timer.countdown(Number(vaildTime))
 
   axios.post(url,
     JSON.stringify({
@@ -79,10 +93,6 @@ exports.send = async function (req, res) {
   })
 }
 
-const client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID
-)
-
 exports.verify = async function (req, res) {
   console.log(req.body)
   const token = req.body.tokenData["token"]
@@ -95,15 +105,18 @@ exports.verify = async function (req, res) {
   const payload = ticket.getPayload()
   const userid = payload['sub']
   console.log(userid)
+  const sessionKey = makeid(32)
   
   const user = {
-    googleId: userid,
-    displayName: req.body.profileData["name"],
+    id: "google" + userid,
+    session: sessionKey,
+    name: req.body.profileData["name"],
     phone: req.body.profileData["phone"],
-    photo: req.body.profileData["photoUrl"]
+    photo_url: req.body.profileData["photoUrl"],
+    id_family: "null"
   }
 
-  User.findOne({ googleId: userid }).then(existingUser => {
+  User.findOne({ id: "google" + userid }).then(existingUser => {
     if (!existingUser) {
         new User(user).save()
     }
@@ -112,7 +125,7 @@ exports.verify = async function (req, res) {
   const receiveAuthNumber = req.body.smsCode
   const receivephoneNumber = cache.keys()
   console.log(receivephoneNumber)
-  
+
   if (!receivephoneNumber) {
     console.log('Time out')
     res.json({result: false, message: "인증 시간 초과"})
