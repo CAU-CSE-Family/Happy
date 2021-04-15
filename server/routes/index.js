@@ -1,7 +1,7 @@
 const router = require('express').Router()
 const controller = require('../middleware/controller')
 
-router.post('/requestSmsCode', controller.send)
+router.post('/requestSmsCode', controller.requestSmsCode)
 
 router.post('/signUp', controller.signUp)
 

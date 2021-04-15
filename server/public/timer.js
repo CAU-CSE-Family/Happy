@@ -1,5 +1,5 @@
-module.exports.countdown = (vaildTime) => {
-    let endTime, secs, mins, msLeft, time, div
+exports.countdown = async function (vaildTime){
+    let endTime, secs, mins, msLeft, time
     twoDigits = (n) => { return (n <= 9 ? "0" + n : n) }
     updateTimer = () => {
         msLeft = endTime - (+new Date)

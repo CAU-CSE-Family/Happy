@@ -1,20 +1,21 @@
-//const timer   = require("../public/timer.js")
-const { OAuth2Client } = require('google-auth-library')
+const timer     = require("../public/timer.js")
 const rand      = require("../public/rand.js")
+const User      = require('../models/user')
 const axios     = require('axios')
 const cryptoJs  = require('crypto-js')
-const User      = require('../models/user')
 const cache     = require("memory-cache")
+
+// Create google oauth client to verify token
+const { OAuth2Client } = require('google-auth-library')
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID
+)
 
 const date      = Date.now().toString()
 const uri       = `${process.env.SENS_SERVICEID}`
 const secretKey = `${process.env.SENS_SERVICESECRET}`
 const accessKey = `${process.env.SENS_ACCESSKEYID}`
 const url       = `https://sens.apigw.ntruss.com/sms/v2/services/${encodeURIComponent(uri)}/messages`
-
-const client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID
-)
 
 function makeSignature(serviceId, timeStamp, accessKey, secretKey) {
   const method    = 'POST'
@@ -35,7 +36,7 @@ function makeSignature(serviceId, timeStamp, accessKey, secretKey) {
   return hash.toString(cryptoJs.enc.Base64)
 }
 
-function makeid(length) {
+function makeSessionKey(length) {
   var result           = [];
   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   var charactersLength = characters.length
@@ -45,7 +46,7 @@ function makeid(length) {
  return result.join('')
 }
 
-exports.send = async function (req, res) {
+exports.requestSmsCode = async function (req, res) {
   console.log(req.body)
   const phoneNumber = req.body.phone
   const authNumber = rand.authNo(6)
@@ -56,7 +57,7 @@ exports.send = async function (req, res) {
   }
   cache.put(phoneNumber, authNumber, vaildTime)
 
-  // timer.countdown(Number(vaildTime))
+  timer.countdown(Number(vaildTime))
 
   axios.post(url,
     JSON.stringify({
@@ -81,10 +82,9 @@ exports.send = async function (req, res) {
     res.json({result: true, messages: "인증번호 발송 완료"})
   })
   .catch((response) => {
-    // console.log(response)
     console.log(response.status)
     if (response.data == undefined) {
-      res.json({result: true, messages: "error: undefined"})
+      res.json({result: false, messages: "error: undefined"})
     }
     else {
       console.log('인증 문자 발송에 문제가 있습니다.')
@@ -96,18 +96,17 @@ exports.send = async function (req, res) {
 exports.signUp = async function (req, res) {
   console.log(req.body)
   const token = req.body.tokenData["token"]
-  console.log(token)
 
   const ticket = await client.verifyIdToken({
     idToken: token,
     audience: process.env.GOOGLE_CLIENT_ID
   })
   const payload = ticket.getPayload()
-  const userid = payload['sub']
-  const sessionKey = makeid(32)
+  const googleId = payload['sub']
+  const sessionKey = makeSessionKey(32)
   
-  const user = {
-    id: "google" + userid,
+  const clientUser = {
+    id: "google" + googleId,
     session: sessionKey,
     name: req.body.profileData["name"],
     phone: req.body.profileData["phone"],
@@ -115,27 +114,31 @@ exports.signUp = async function (req, res) {
     id_family: "null"
   }
 
-  User.findOne({ id: "google" + userid }).then(existingUser => {
+  User.findOne({ id: "google" + googleId }).then(existingUser => {
     if (!existingUser) {
-        new User(user).save()
+        new User(clientUser).save()
+    }
+    else {
+      res.end("이미 존재하는 유저입니다.")
     }
   })
 
-  const receiveAuthNumber = req.body.smsCode
-  const receivephoneNumber = cache.keys()
-  console.log(receivephoneNumber)
+  const authNumber = req.body.smsCode
+  const phoneNumber = cache.keys()[0]
+  console.log(phoneNumber)
 
-  if (!receivephoneNumber) {
+  if (!phoneNumber) {
     console.log('Time out')
-    res.json({result: false, message: "인증 시간 초과"})
+    res.json({result: false, message: "캐시 데이터 삭제됨: 인증 시간 초과"})
   }
-  else if (!cache.get(receivephoneNumber)) {
+  else if (!cache.get(phoneNumber)) {
     console.log('No auth Number')
     res.json({result: false, message: "인증번호가 입력되지 않았습니다."})
   }
-  else if (cache.get(receivephoneNumber) == receiveAuthNumber) {
+  else if (cache.get(phoneNumber) == authNumber) {
     console.log('Sucessfully verified')
-    res.json({result: true, message: "회원가입이 완료되었습니다.", user: user})
+    cache.del(phoneNumber)
+    res.json({result: true, message: "회원가입이 완료되었습니다.", user: clientUser})
   }
   else {
     console.log('Wrong request: Not verified')
@@ -145,18 +148,18 @@ exports.signUp = async function (req, res) {
 
 exports.signIn = async function (req, res){
   console.log(req.body)
-  userid = req.body["id"]
-  User.findOne({ id: userid }).then(existingUser => {
+  googleId = req.body["id"]
+  User.findOne({ id: googleId }).then(existingUser => {
     if (!existingUser) {
-      res.json({result: false, message: "잘못된 접근입니다."})
+      res.json({result: false, message: "회원가입을 진행해 주세요."})
     }
     else if (existingUser) {
-      res.json({result: true, message: "Sign in"})
+      res.json({result: true, message: "Successfully sign in"})
     }
   })
 }
 
 exports.signInWithToken = async function (req, res){
   console.log(req.body)
-  res.json({result: true, message: "signInWithToken"})
+  res.json({result: true, message: "Successfully sign in with token"})
 }
