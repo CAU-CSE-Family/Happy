@@ -2,11 +2,11 @@ const path    = require('path')
 const dotenv  = require('dotenv')
 dotenv.config({ path: './config/config.env' }) // Load config
 
-const passport   = require('passport')
-const session    = require('express-session')
 const morgan  = require('morgan')
 const express = require('express')
 const app     = express()
+const passport   = require('passport')
+const session    = require('express-session')
 
 // connect to MongoDB
 const connectDB  = require('./config/db')
@@ -24,14 +24,17 @@ app.use(function (req, res, next) {
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// View ejs - not use now
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-app.engine('html', require('ejs').renderFile);
+// Sessions
+app.use(
+  session({
+    secret: process.env.COOKIE_SECRET,
+    saveUninitialized: true,
+    resave: true,
+  })
+)
 
-// Passport config
-require('./config/passport')(passport) 
-app.use(passport.initialize()) // Passport middleware
+// Passport middleware
+app.use(passport.initialize())
 app.use(passport.session())
 
 // Logging for dev
@@ -39,17 +42,11 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'))
 }
 
-// Sessions
-app.use(
-  session({
-    secret: process.env.COOKIE_SECRET,
-    saveUninitialized: false,
-    resave: false,
-  })
-)
+// Routes
+const indexRouter = require('./routes/index')
+app.use('/', indexRouter)
 
-app.use('/auth', require('./routes/auth'))
-
+// Running server on PORT
 app.set('PORT', process.env.PORT || 5000)
 app.listen(app.get('PORT'), function() {
   console.log('Server running on port ' + app.get('PORT'))

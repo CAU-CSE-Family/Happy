@@ -1,16 +1,24 @@
-module.exports = {
-  ensureAuth: function (req, res, next) {
-    if (req.isAuthenticated()) {
-      return next()
-    } else {
-      res.redirect('/')
+const { OAuth2Client } = require('google-auth-library')
+const User = require('../models/user')
+const jwt = require('jsonwebtoken')
+
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID
+)
+
+exports.verify = async function (token) {
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID
+  })
+  const payload = ticket.getPayload()
+  const userid = payload['sub']
+  console.log(userid)
+
+  User.findOne({ googleId: userid }).then(existingUser => {
+    if (!existingUser) {
+        new User({ googleId: userid }).save()
     }
-  },
-  ensureGuest: function (req, res, next) {
-    if (!req.isAuthenticated()) {
-      return next();
-    } else {
-      res.redirect('/');
-    }
-  },
+    res.send(token)
+  })
 }
