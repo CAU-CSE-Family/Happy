@@ -31,21 +31,22 @@ exports.verify = async function (req, res) {
   })
 
   const receiveAuthNumber = req.body.smsCode
+  
 
   if (!cache.get(phoneNumber)) {
     console.log('Time out')
-    res.end('유효 시간 초과')
+    res.json({"result": False, "message": "인증 시간 초과"})
   }
-  else if (!authNumber) {
+  else if (!cache.get(authNumber)) {
     console.log('No auth Number')
-    res.end('인증번호를 입력하지 않았습니다.')
+    res.json({"result": False, "message": "인증번호가 입력되지 않았습니다."})
   }
   else if (cache.get(authNumber) == receiveAuthNumber) {
     console.log('Sucessfully verified')
-    res.json({"result": True})
+    res.json({"result": True, "message": "회원가입이 완료되었습니다.", "user": client})
   }
   else {
     console.log('Wrong request: Not verified')
-    res.end('잘못된 요청')
+    res.json({"result": False, "message": "잘못된 요청"})
   }
 }
