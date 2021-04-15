@@ -4,9 +4,9 @@ dotenv.config({ path: './config/config.env' }) // Load config
 
 const morgan  = require('morgan')
 const express = require('express')
+const session = require('express-session')
 const app     = express()
-const passport   = require('passport')
-const session    = require('express-session')
+
 
 // connect to MongoDB
 const connectDB  = require('./config/db')
@@ -32,10 +32,6 @@ app.use(
     resave: true,
   })
 )
-
-// Passport middleware
-app.use(passport.initialize())
-app.use(passport.session())
 
 // Logging for dev
 if (process.env.NODE_ENV === 'development') {

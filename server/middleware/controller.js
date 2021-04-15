@@ -76,25 +76,3 @@ exports.send = async function (req, res) {
     }
   })
 }
-
-exports.verify = async function (req, res) {
-  const phoneNumber = req.body.phone
-  const authNumber = req.body.auth
-
-  if (!cache.get(phoneNumber)) {
-    console.log('Time out')
-    res.end('유효 시간 초과')
-  }
-  else if (!authNumber) {
-    console.log('No auth Number')
-    res.end('인증번호를 입력하지 않았습니다.')
-  }
-  else if (cache.get(phoneNumber) == authNumber) {
-    console.log('Sucessfully verified')
-    res.json({"result": True})
-  }
-  else {
-    console.log('Wrong request: Not verified')
-    res.end('잘못된 요청')
-  }
-}
