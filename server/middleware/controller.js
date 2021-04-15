@@ -93,7 +93,7 @@ exports.send = async function (req, res) {
   })
 }
 
-exports.verify = async function (req, res) {
+exports.signUp = async function (req, res) {
   console.log(req.body)
   const token = req.body.tokenData["token"]
   console.log(token)
@@ -104,7 +104,6 @@ exports.verify = async function (req, res) {
   })
   const payload = ticket.getPayload()
   const userid = payload['sub']
-  console.log(userid)
   const sessionKey = makeid(32)
   
   const user = {
@@ -142,4 +141,22 @@ exports.verify = async function (req, res) {
     console.log('Wrong request: Not verified')
     res.json({result: false, message: "잘못된 요청"})
   }
+}
+
+exports.signIn = async function (req, res){
+  console.log(req.body)
+  userid = req.body["id"]
+  User.findOne({ id: userid }).then(existingUser => {
+    if (!existingUser) {
+      res.json({result: false, message: "잘못된 접근입니다."})
+    }
+    else if (existingUser) {
+      res.json({result: true, message: "Sign in"})
+    }
+  })
+}
+
+exports.signInWithToken = async function (req, res){
+  console.log(req.body)
+  res.json({result: true, message: "signInWithToken"})
 }
