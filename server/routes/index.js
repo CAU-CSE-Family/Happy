@@ -6,9 +6,6 @@ router.post('/requestSmsCode', controller.send)
 
 router.post('/requestVerify', controller.verify)
 
-router.post('/signUp', (req, res) => {
-    const { idToken } = req.body
-    auth.verify(idToken).catch(console.error)
-})
+router.post('/signUp', auth.verify)
 
 module.exports = router
