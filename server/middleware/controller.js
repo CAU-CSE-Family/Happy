@@ -103,10 +103,11 @@ exports.signUp = async function (req, res) {
   })
   const payload = ticket.getPayload()
   const googleId = payload['sub']
+  const type = req.body.tokenData["type"]
   const sessionKey = makeSessionKey(32)
   
   const clientUser = {
-    id: "google" + googleId,
+    id: type + googleId,
     session: sessionKey,
     name: req.body.profileData["name"],
     phone: req.body.profileData["phone"],
@@ -114,7 +115,7 @@ exports.signUp = async function (req, res) {
     id_family: "null"
   }
 
-  User.findOne({ id: "google" + googleId }).then(existingUser => {
+  User.findOne({ id: type + googleId }).then(existingUser => {
     if (!existingUser) {
         new User(clientUser).save()
     }
@@ -161,5 +162,22 @@ exports.signIn = async function (req, res){
 
 exports.signInWithToken = async function (req, res){
   console.log(req.body)
-  res.json({result: true, message: "Successfully sign in with token"})
+  const token = req.body.tokenData["token"]
+
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID
+  })
+  const payload = ticket.getPayload()
+  const googleId = payload['sub']
+  const type = req.body.tokenData["type"]
+
+  User.findOne({ id: type + googleId }).then(existingUser => {
+    if (!existingUser) {
+      res.json({result: false, message: "ID token이 유효하지 않습니다."})
+    }
+    else if (existingUser) {
+      res.json({result: true, message: "Successfully sign in with token"})
+    }
+  })
 }
