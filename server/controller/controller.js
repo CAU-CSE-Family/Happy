@@ -36,16 +36,6 @@ function makeSignature(serviceId, timeStamp, accessKey, secretKey) {
   return hash.toString(cryptoJs.enc.Base64)
 }
 
-function makeSessionKey(length) {
-  var result           = [];
-  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  var charactersLength = characters.length
-  for ( var i = 0; i < length; i++ ) {
-    result.push(characters.charAt(Math.floor(Math.random() * charactersLength)))
- }
- return result.join('')
-}
-
 exports.requestSmsCode = async function (req, res) {
   console.log(req.body)
   const phoneNumber = req.body.phone
@@ -104,7 +94,7 @@ exports.signUp = async function (req, res) {
   const payload = ticket.getPayload()
   const googleId = payload['sub']
   const type = req.body.tokenData["type"]
-  const sessionKey = makeSessionKey(32)
+  const sessionKey = rand.randomString(32)
   
   const clientUser = {
     id: type + googleId,
@@ -112,7 +102,7 @@ exports.signUp = async function (req, res) {
     name: req.body.profileData["name"],
     phone: req.body.profileData["phone"],
     photo_url: req.body.profileData["photoUrl"],
-    id_family: "null"
+    id_family: null
   }
 
   User.findOne({ id: type + googleId }).then(existingUser => {
@@ -156,7 +146,7 @@ exports.signIn = async function (req, res){
       res.json({result: false, message: "회원가입을 진행해 주세요."})
     }
     else if (existingUser) {
-      console.log("User data sent: ", existingUser)
+      console.log("User data sent(SignIn):\n", existingUser)
       res.json({result: true, message: "Successfully sign in", user: existingUser})
     }
   })
@@ -180,7 +170,7 @@ exports.signInWithToken = async function (req, res){
       res.json({result: false, message: "ID token이 유효하지 않습니다."})
     }
     else if (existingUser) {
-      console.log("User data sent: ", existingUser)
+      console.log("User data sent(SignInWithToken):\n", existingUser)
       res.json({result: true, message: "Successfully sign in with token", user: existingUser})
     }
   })

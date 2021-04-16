@@ -4,7 +4,7 @@ exports.countdown = async function (vaildTime){
     updateTimer = () => {
         msLeft = endTime - (+new Date)
         if (msLeft < 1000) {
-            console.log('시간 초과')
+            console.log('***Cache deleted***')
         } else {
             time = new Date(msLeft)
             mins = time.getUTCMinutes()

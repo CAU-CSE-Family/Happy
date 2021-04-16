@@ -5,8 +5,12 @@ const UserSchema = new mongoose.Schema({
     session: String,
     name: String,
     phone: String,
-    photo: String,
-    id_family: String,
+    photo_url: String,
+    id_family: {
+        type: String,
+        required: false,
+        default: null
+    }
 })
 
 module.exports = mongoose.model('User', UserSchema)

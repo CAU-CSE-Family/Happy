@@ -9,6 +9,10 @@ router.post('/signIn', controller.signIn)
 
 router.post('/signInWithToken', controller.signInWithToken)
 
-router.post('/upload', controller.uploadFile)
+//router.post('/createFamily')
+
+//router.post('/joinFamily')
+
+// router.post('/upload', controller.uploadFile)
 
 module.exports = router
