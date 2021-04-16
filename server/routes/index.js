@@ -1,13 +1,13 @@
 const router = require('express').Router()
-const controller = require('../controller/controller')
+const sign   = require('../controller/sign')
 
-router.post('/requestSmsCode', controller.requestSmsCode)
+router.post('/requestSmsCode', sign.requestSmsCode)
 
-router.post('/signUp', controller.signUp)
+router.post('/signUp', sign.signUp)
 
-router.post('/signIn', controller.signIn)
+router.post('/signIn', sign.signIn)
 
-router.post('/signInWithToken', controller.signInWithToken)
+router.post('/signInWithToken', sign.signInWithToken)
 
 //router.post('/createFamily')
 

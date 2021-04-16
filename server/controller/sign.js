@@ -39,8 +39,8 @@ function makeSignature(serviceId, timeStamp, accessKey, secretKey) {
 exports.requestSmsCode = async function (req, res) {
   console.log(req.body)
   const phoneNumber = req.body.phone
-  const authNumber = rand.authNo(6)
-  const vaildTime = 180000 //3 Minutes
+  const authNumber = rand.randomNumber(6)
+  const vaildTime = 300000 // 5 Minutes
 
   if (cache.get(phoneNumber)) {
     cache.del(phoneNumber)
@@ -95,12 +95,14 @@ exports.signUp = async function (req, res) {
   const googleId = payload['sub']
   const type = req.body.tokenData["type"]
   const sessionKey = rand.randomString(32)
-  
+  const authNumber = req.body.smsCode
+  const phoneNumber = cache.keys()[0]
+
   const clientUser = {
     id: type + googleId,
     session: sessionKey,
     name: req.body.profileData["name"],
-    phone: req.body.profileData["phone"],
+    phone: phoneNumber || req.body.profileData["phone"],
     photo_url: req.body.profileData["photoUrl"],
     id_family: null
   }
@@ -113,10 +115,6 @@ exports.signUp = async function (req, res) {
       res.end("이미 존재하는 유저입니다.")
     }
   })
-
-  const authNumber = req.body.smsCode
-  const phoneNumber = cache.keys()[0]
-  console.log(phoneNumber)
 
   if (!phoneNumber) {
     console.log('Time out')
@@ -142,7 +140,7 @@ exports.signIn = async function (req, res){
   googleId = req.body["id"]
   User.findOne({ id: googleId }).then(existingUser => {
     if (!existingUser) {
-      console.log("User\'s id is not in DB")
+      console.log("User\'s ID is not in DB")
       res.json({result: false, message: "회원가입을 진행해 주세요."})
     }
     else if (existingUser) {

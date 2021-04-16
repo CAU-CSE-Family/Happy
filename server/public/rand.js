@@ -1,9 +1,9 @@
-exports.authNo = function (n) {
-  var value = ""
-  for (var i = 0; i < n; i++) {
-    value += parseInt(Math.random() * (10))
+exports.randomNumber = function (length){
+  var result = ""
+  for (var i = 0; i < length; i++) {
+    result += parseInt(Math.random() * (10))
   }
-  return value
+  return result
 }
 
 exports.randomString = function (length){
