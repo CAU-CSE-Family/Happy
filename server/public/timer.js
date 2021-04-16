@@ -13,7 +13,7 @@ exports.countdown = async function (vaildTime){
             var msg = '남은 시간: ' + msgTime
             setTimeout(updateTimer, time.getUTCMilliseconds() + 500)
 
-            console.log(msg)
+            // console.log(msg)
         }
     }
     endTime = (+new Date) + vaildTime + 500

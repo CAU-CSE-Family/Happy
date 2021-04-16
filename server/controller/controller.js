@@ -152,17 +152,19 @@ exports.signIn = async function (req, res){
   googleId = req.body["id"]
   User.findOne({ id: googleId }).then(existingUser => {
     if (!existingUser) {
+      console.log("User\'s id is not in DB")
       res.json({result: false, message: "회원가입을 진행해 주세요."})
     }
     else if (existingUser) {
-      res.json({result: true, message: "Successfully sign in"})
+      console.log("User data sent: ", existingUser)
+      res.json({result: true, message: "Successfully sign in", user: existingUser})
     }
   })
 }
 
 exports.signInWithToken = async function (req, res){
   console.log(req.body)
-  const token = req.body.tokenData["token"]
+  const token = req.body["token"]
 
   const ticket = await client.verifyIdToken({
     idToken: token,
@@ -170,14 +172,17 @@ exports.signInWithToken = async function (req, res){
   })
   const payload = ticket.getPayload()
   const googleId = payload['sub']
-  const type = req.body.tokenData["type"]
+  const type = req.body["type"]
 
   User.findOne({ id: type + googleId }).then(existingUser => {
     if (!existingUser) {
+      console.log("User\'s token is not vaild")
       res.json({result: false, message: "ID token이 유효하지 않습니다."})
     }
     else if (existingUser) {
-      res.json({result: true, message: "Successfully sign in with token"})
+      console.log("User data sent: ", existingUser)
+      res.json({result: true, message: "Successfully sign in with token", user: existingUser})
     }
   })
 }
+
