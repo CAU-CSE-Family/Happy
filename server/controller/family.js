@@ -24,15 +24,7 @@ exports.createFamily = async function (req, res){
       res.json({result: false, message: "ID와 Token이 유효하지 않습니다."})
     }
     else if (existingUser) {
-      const MemberData = {
-        "id": existingUser.id,
-        "profileData": ProfileData = {
-          "name": existingUser.name,
-          "phone": existingUser.phone,
-          "photoUrl": existingUser.photo_url
-        }
-      }
-      res.json({result: true, message: "Successfully create family", family: familyId, members: [MemberData]})
+      res.json({result: true, message: "Successfully create family", family: familyId})
     }
   }).catch(err => {
     console.log(err)
@@ -46,30 +38,10 @@ exports.joinFamily = async function (req, res){
   const googleId = req.body["id"]
   const sessionKey = req.body["session"]
   const familyId = req.body["id_family"]
-  const members = []
 
-  User.find({ id_family: familyId }).then(existingFamily => {
-    if (!existingFamily) {
-      console.log("No matching family ID in the DB.")
-      res.json({result: false, message: "매칭되는 family ID가 없습니다."})
-    }
-    else if (existingFamily) {
-      existingFamily.forEach(member => {
-        const MemberData = {
-          "id": member.id,
-          "profileData": ProfileData = {
-            "name": member.name,
-            "phone": member.phone,
-            "photoUrl": member.photo_url
-          }
-        }
-        members.push(MemberData)
-      })
-    }
-  }).catch(err => {
-    console.log(err)
-    res.json({result: false, message: err})
-  })
+  if (User.find({ id_family: familyId }).count() = 0) {
+    res.json({result: false, message: "id_family is not vaild."})
+  }
 
   User.findOneAndUpdate({ id: googleId, session: sessionKey },
     { $set : { id_family: familyId } }
@@ -79,17 +51,7 @@ exports.joinFamily = async function (req, res){
       res.json({result: false, message: "ID와 Token이 유효하지 않습니다."})
     }
     else if (existingUser) {
-      const MemberData = {
-        "id": existingUser.id,
-        "profileData": ProfileData = {
-          "name": existingUser.name,
-          "phone": existingUser.phone,
-          "photoUrl": existingUser.photo_url
-        }
-      }
-      members.push(MemberData)
-      
-      res.json({result: true, message: "Successfully join family", family: familyId, members: members})
+      res.json({result: true, message: "Successfully join family", family: familyId})
     }
   }).catch(err => {
     console.log(err)
