@@ -39,7 +39,7 @@ exports.joinFamily = async function (req, res){
   const sessionKey = req.body.authData["session"]
   const familyId = req.body["family"]
 
-  if (User.find({ id_family: familyId }).count() = 0) {
+  if (User.find({ id_family: familyId }).count() == 0) {
     res.json({result: false, message: "id_family is not vaild."})
   }
 

@@ -9,7 +9,7 @@ exports.getMembers = async function (req, res){
   const sessionKey = req.body.authData["session"]
   const familyId = req.body["family"]
   
-  if (User.find({ id: googleId, session: sessionKey }).count() = 0) {
+  if (User.find({ id: googleId, session: sessionKey }).count() == 0) {
     res.json({result: false, message: "No matching user ID and session in the DB."})
   }
 
