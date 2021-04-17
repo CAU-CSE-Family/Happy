@@ -137,7 +137,8 @@ exports.signUp = async function (req, res) {
 
 exports.signIn = async function (req, res){
   console.log(req.body)
-  googleId = req.body["id"]
+
+  const googleId = req.body["id"]
   User.findOne({ id: googleId }).then(existingUser => {
     if (!existingUser) {
       console.log("User\'s ID is not in DB")
@@ -152,8 +153,8 @@ exports.signIn = async function (req, res){
 
 exports.signInWithToken = async function (req, res){
   console.log(req.body)
-  const token = req.body["token"]
 
+  const token = req.body["token"]
   const ticket = await client.verifyIdToken({
     idToken: token,
     audience: process.env.GOOGLE_CLIENT_ID
