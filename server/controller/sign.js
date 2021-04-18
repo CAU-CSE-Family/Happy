@@ -108,12 +108,8 @@ exports.signUp = async function (req, res) {
   }
 
   User.findOne({ id: type + googleId }).then(existingUser => {
-    if (!existingUser) {
-        new User(clientUser).save()
-    }
-    else {
-      res.end("이미 존재하는 유저입니다.")
-    }
+    if (!existingUser) { new User(clientUser).save() }
+    else { res.end("이미 존재하는 유저입니다.") }
   })
 
   if (!phoneNumber) {
@@ -126,7 +122,6 @@ exports.signUp = async function (req, res) {
   }
   else if (cache.get(phoneNumber) == authNumber) {
     console.log('Sucessfully verified')
-    cache.del(phoneNumber)
     res.json({result: true, message: "회원가입이 완료되었습니다.", user: clientUser})
   }
   else {
