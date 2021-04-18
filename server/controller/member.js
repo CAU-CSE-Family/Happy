@@ -7,10 +7,10 @@ exports.getMembers = async function (req, res){
 
   const googleId = req.body["id"]
   const sessionKey = req.body["session"]
-  const familyId = ""
+  let familyId = ""
 
   User.findOne({ id: googleId, session: sessionKey }).then(existingUser => {
-    if (existingUser.count() == 0) {
+    if (!existingUser) {
       res.json({result: false, message: "No matching user ID and session in the DB."})
     }
     else if (existingUser) {

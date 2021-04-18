@@ -15,7 +15,7 @@ exports.createFamily = async function (req, res){
     } else { break }
   } while (true)
   console.log("Successfully created family ID: ", familyId)
-
+  
   User.findOneAndUpdate({ id: googleId, session: sessionKey },
     { $set : { id_family: familyId } }
   ).then(existingUser => {
@@ -41,25 +41,25 @@ exports.joinFamily = async function (req, res){
 
   if (User.find({ id_family: familyId }).count() == 0) {
     res.json({result: false, message: "id_family is not vaild."})
+  } else {
+    User.findOneAndUpdate({ id: googleId, session: sessionKey },
+      { $set : { id_family: familyId } }
+    ).then(existingUser => {
+      if (!existingUser) {
+        console.log("No matching user ID and token in the DB.")
+        res.json({result: false, message: "ID와 Token이 유효하지 않습니다."})
+      }
+      else if (existingUser) {
+        res.json({result: true, message: "Successfully join family", family: familyId})
+      }
+    }).catch(err => {
+      console.log(err)
+      res.json({result: false, message: err})
+    })
   }
-
-  User.findOneAndUpdate({ id: googleId, session: sessionKey },
-    { $set : { id_family: familyId } }
-  ).then(existingUser => {
-    if (!existingUser) {
-      console.log("No matching user ID and token in the DB.")
-      res.json({result: false, message: "ID와 Token이 유효하지 않습니다."})
-    }
-    else if (existingUser) {
-      res.json({result: true, message: "Successfully join family", family: familyId})
-    }
-  }).catch(err => {
-    console.log(err)
-    res.json({result: false, message: err})
-  })
 }
 
-exports.leaveFamily = async function (rea, res){
+exports.leaveFamily = async function (req, res){
   console.log("Leave Family:\n", req.body)
 
   const googleId = req.body["id"]
