@@ -58,3 +58,25 @@ exports.joinFamily = async function (req, res){
     res.json({result: false, message: err})
   })
 }
+
+exports.leaveFamily = async function (rea, res){
+  console.log("Leave Family:\n", req.body)
+
+  const googleId = req.body["id"]
+  const sessionKey = req.body["session"]
+
+  User.findOneAndUpdate({ id: googleId, session: sessionKey },
+    { $set : { id_family: null } }
+  ).then(existingUser => {
+    if (!existingUser) {
+      console.log("No matching user ID and token in the DB.")
+      res.json({result: false, message: "ID와 Token이 유효하지 않습니다."})
+    }
+    else if (existingUser) {
+      res.json({result: true, message: "Successfully leave family"})
+    }
+  }).catch(err => {
+    console.log(err)
+    res.json({result: false, message: err})
+  })
+}

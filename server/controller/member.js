@@ -5,14 +5,19 @@ const members = []
 exports.getMembers = async function (req, res){
   console.log("getMembers:\n", req.body)
 
-  const googleId = req.body.authData["id"]
-  const sessionKey = req.body.authData["session"]
-  const familyId = req.body["family"]
-  
-  if (User.find({ id: googleId, session: sessionKey }).count() == 0) {
-    res.json({result: false, message: "No matching user ID and session in the DB."})
-  }
+  const googleId = req.body["id"]
+  const sessionKey = req.body["session"]
+  const familyId = ""
 
+  User.findOne({ id: googleId, session: sessionKey }).then(existingUser => {
+    if (existingUser.count() == 0) {
+      res.json({result: false, message: "No matching user ID and session in the DB."})
+    }
+    else if (existingUser) {
+      familyId = existingUser["id_family"]
+    }
+  })
+  
   User.find({ id_family: familyId }).then(existingFamily => {
     if (!existingFamily) {
       console.log("No matching family ID in the DB.")
