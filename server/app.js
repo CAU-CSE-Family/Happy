@@ -7,7 +7,7 @@ const express = require('express')
 const app     = express()
 
 
-// connect to MongoDB
+// Connect to MongoDB
 const connectDB  = require('./config/db')
 connectDB() 
 

@@ -1,65 +1,36 @@
-const multer = require("multer")
-const sharp  = require("sharp")
+const path    = require('path')
+const dotenv  = require('dotenv')
+dotenv.config({ path: './config/config.env' }) // Load config
 
-const multerStorage = multer.memoryStorage()
+const Image = require('../models/image')
 
-const multerFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image")) { cb(null, true) }
-  else { cb("Please upload only images.", false) }
-}
-
-const upload = multer({
-  storage: multerStorage,
-  fileFilter: multerFilter
-})
-
-const uploadFiles = upload.array("images", 10) // limit to 10 images
-
-exports.uploadImages = (req, res, next) => {
-  uploadFiles(req, res, err => {
-    if (err instanceof multer.MulterError) {
-      if (err.code === "LIMIT_UNEXPECTED_FILE") {
-        res.json({result: false, message: "Too many images exceeding the allowed limit."})
-      }
-    } else if (err) {
-      res.json({result: false, message: "Multer error occurred when uploading."})
+exports.uploadImage = async function (req, res){
+  var obj = {
+    name: req.body.name,
+    desc: req.body.desc,
+    img: {
+      data: fs.readFileSync(path.join(__dirname + '/uploads/' + req.file.filename)),
+      contentType: 'image/png'
     }
+  }
 
-    next()
+  Image.create(obj, (err, item) => {
+    if (err) { res.json({result: false, message: err}) }
+    else {
+      item.save()
+      res.json({result: true, message: "Successfully uploaded image."})
+    }
   })
 }
 
-exports.resizeImages = async (req, res, next) => {
-  if (!req.files) return next()
-
-  req.body.images = []
-  await Promise.all(
-    req.files.map(async file => {
-      console.log(file)
-      const fileName = file.originalname.replace(/\..+%/, "")
-      const newFileName = `${fileNmae}_${Date.now()}.jpeg`
-
-      await sharp(file.buffer)
-        .resize(640, 320)
-        .toFormat("jpeg")
-        .jpeg({ quality: 90 })
-        .toFile(`upload/${newFileNMame}`)
-
-      req.body.images.push(newFileName)
-    })
-  )
-
-  next()
-}
-
-exports.getResult = async (req, res) => {
-  if (req.body.images.length <= 0) {
-    return res.send('No image selected.')
-  }
-
-  const images = req.body.images
-    .map(image => "" + image + "")
-    .join("");
-
-  return res.send(`Images were uploaded:${images}`)
+exports.getImages = async function (req, res){
+  Image.find({}, (err, items) => {
+    if (err) {
+      console.log(err)
+      res.json({result: false, message: err})
+    }
+    else {
+      res.json({result: true, message: "Successfully get images.", images: items})
+    }
+  })
 }
