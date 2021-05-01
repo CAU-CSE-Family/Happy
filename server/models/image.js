@@ -5,7 +5,6 @@ const ImageSchema = new mongoose.Schema({
     id_user: String,
     id_family: {
         type: String,
-        required: false,
         default: null
     },
     timestamp: {

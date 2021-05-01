@@ -37,7 +37,8 @@ function makeSignature(serviceId, timeStamp, accessKey, secretKey) {
 }
 
 exports.requestSmsCode = async function (req, res) {
-  console.log(req.body)
+  console.log("requestSmsCode:\n", req.body)
+
   const phoneNumber = req.body.phone
   const authNumber = rand.randomNumber(6)
   const vaildTime = 300000 // 5 Minutes
@@ -46,7 +47,6 @@ exports.requestSmsCode = async function (req, res) {
     cache.del(phoneNumber)
   }
   cache.put(phoneNumber, authNumber, vaildTime)
-
   timer.countdown(Number(vaildTime))
 
   axios.post(url,
@@ -67,26 +67,25 @@ exports.requestSmsCode = async function (req, res) {
       'x-ncp-apigw-signature-v2': makeSignature(encodeURIComponent(uri), date, accessKey, secretKey),
     }
   })
-  .then((response) => {
+  .then(response => {
     console.log('Response: ', response.data)
     res.json({result: true, messages: "인증번호 발송 완료"})
   })
-  .catch((response) => {
-    console.log(response.status)
-    if (response.data == undefined) {
+  .catch(error => {
+    console.log(error.status)
+    if (error.data == undefined) {
       res.json({result: false, messages: "error: undefined"})
     }
     else {
-      console.log('인증 문자 발송에 문제가 있습니다.')
       res.json({result: false, messages: "인증번호 발송 오류"})
     }
   })
 }
 
 exports.signUp = async function (req, res) {
-  console.log(req.body)
-  const token = req.body.tokenData["token"]
+  console.log("signUp:\n", req.body)
 
+  const token = req.body.tokenData["token"]
   const ticket = await client.verifyIdToken({
     idToken: token,
     audience: process.env.GOOGLE_CLIENT_ID
@@ -131,7 +130,7 @@ exports.signUp = async function (req, res) {
 }
 
 exports.signIn = async function (req, res){
-  console.log(req.body)
+  console.log("signIn:\n", req.body)
 
   const googleId = req.body["id"]
   User.findOne({ id: googleId }).then(existingUser => {
@@ -147,7 +146,7 @@ exports.signIn = async function (req, res){
 }
 
 exports.signInWithToken = async function (req, res){
-  console.log(req.body)
+  console.log("signInWithToken:\n", req.body)
 
   const token = req.body["token"]
   const ticket = await client.verifyIdToken({
@@ -160,11 +159,9 @@ exports.signInWithToken = async function (req, res){
 
   User.findOne({ id: type + googleId }).then(existingUser => {
     if (!existingUser) {
-      console.log("User\'s token is not vaild")
-      res.json({result: false, message: "ID token이 유효하지 않습니다."})
+      res.json({result: false, message: "ID token is not vaild."})
     }
     else if (existingUser) {
-      console.log("User data sent(SignInWithToken):\n", existingUser)
       res.json({result: true, message: "Successfully sign in with token", user: existingUser})
     }
   })
