@@ -20,6 +20,6 @@ router.post('/leaveFamily', family.leaveFamily)
 
 router.post('/getMembers', member.getMembers)
 
-// router.post('/upload', controller.uploadFile)
+router.post('/upload', upload.uploadImages, upload.resizeImages, upload.getResult)
 
 module.exports = router
