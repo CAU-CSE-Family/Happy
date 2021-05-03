@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const multer = require('../config/multer')
 const sign   = require('../controller/sign')
 const family = require('../controller/family')
 const member = require('../controller/member')
@@ -19,5 +20,9 @@ router.post('/joinFamily', family.joinFamily)
 router.post('/leaveFamily', family.leaveFamily)
 
 router.post('/getMembers', member.getMembers)
+
+// router.post('/uploadImage', multer.upload.single('image'), upload.uploadImage)
+
+// router.post('/getImages', upload.getImages)
 
 module.exports = router
