@@ -1,4 +1,5 @@
 const Wish = require('../models/wish')
+const User = require('../models/user')
 const fs = require('fs')
 
 exports.uploadWishes = async function (req, res, next){
@@ -103,6 +104,10 @@ exports.deleteWishes = async function (req, res, next){
 
   const result = wishArray.map((src, index) => {
     return Wish.deleteOne({ filename: files[index].originalname }).then(() => {
+      fs.unlinkSync('../uploads/'+files[index].originalname, (err) => {
+        if (err) { console.log("Failed to delete local wishes:" + err) }
+        else { console.log("Successfully deleted local wishes.") }
+      })
       return { msg: `${files[index].originalname} Deleted successfully.`}
     }).catch(err => {
       return Promise.reject({ err: err.message || `Cannot delete ${files[index].originalname} file missing.`})

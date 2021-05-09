@@ -1,4 +1,5 @@
 const Image = require('../models/image')
+const User  = require('../models/user')
 const fs = require('fs')
 
 exports.uploadImages = async function (req, res, next){
@@ -103,6 +104,10 @@ exports.deleteImages = async function (req, res, next){
 
   const result = imgArray.map((src, index) => {
     return Image.deleteOne({ filename: files[index].originalname }).then(() => {
+      fs.unlinkSync('../uploads/'+files[index].originalname, (err) => {
+        if (err) { console.log("Failed to delete local image:" + err) }
+        else { console.log("Successfully deleted local image.") }
+      })
       return { msg: `${files[index].originalname} Deleted successfully.`}
     }).catch(err => {
       return Promise.reject({ err: err.message || `Cannot delete ${files[index].originalname} file missing.`})
