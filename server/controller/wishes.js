@@ -6,7 +6,7 @@ exports.uploadWishes = async function (req, res, next){
 
   const googleId = req.body["id"]
   const sessionKey = req.body["session"]
-  const familyId = req.body["family"]
+  const familyId = req.body["id_family"]
   const files = req.files
 
   User.findOne({ id: googleId, session: sessionKey, id_family: familyId }).then(existingUser => {
@@ -59,7 +59,7 @@ exports.uploadWishes = async function (req, res, next){
 exports.getWishes = async function (req, res){
   const googleId = req.body["id"]
   const sessionKey = req.body["session"]
-  const familyId = req.body["family"]
+  const familyId = req.body["id_family"]
 
   User.findOne({ id: googleId, session: sessionKey, id_family: familyId }).then(existingUser => {
     if (!existingUser) {
@@ -82,7 +82,7 @@ exports.getWishes = async function (req, res){
 exports.deleteWishes = async function (req, res, next){
   const googleId = req.body["id"]
   const sessionKey = req.body["session"]
-  const familyId = req.body["family"]
+  const familyId = req.body["id_family"]
   const files = req.files
 
   User.findOne({ id: googleId, session: sessionKey, id_family: familyId }).then(existingUser => {

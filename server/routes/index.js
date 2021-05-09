@@ -22,13 +22,13 @@ router.post('/leaveFamily', family.leaveFamily)
 
 router.post('/getMembers', member.getMembers)
 
-router.post('/uploadImages', store.array('images', 24), images.uploadImages)
+router.post('/uploadImages', store.any(), images.uploadImages)
 
 router.post('/getImages', images.getImages)
 
 router.post('/deleteImages', images.deleteImages)
 
-router.post('/uploadWishes', store.array('wishes', 12), wishes.uploadWishes)
+router.post('/uploadWishes', store.any(), wishes.uploadWishes)
 
 router.post('/getWishes', wishes.getWishes)
 
