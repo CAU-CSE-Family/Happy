@@ -28,10 +28,10 @@ router.post('/getImages', images.getImages)
 
 router.post('/deleteImages', images.deleteImages)
 
-router.post('/uploadWishes', store.array('wishes', 12), wishes.uploadImages)
+router.post('/uploadWishes', store.array('wishes', 12), wishes.uploadWishes)
 
-router.post('/getWishes', wishes.getImages)
+router.post('/getWishes', wishes.getWishes)
 
-router.post('/deleteWishes', wishes.deleteImages)
+router.post('/deleteWishes', wishes.deleteWishes)
 
 module.exports = router
