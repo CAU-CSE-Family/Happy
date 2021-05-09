@@ -22,8 +22,8 @@ exports.uploadImages = async function (req, res, next){
   }
 
   let imgArray = files.map((file) => {
-    let img = fs.readFileSync(file.path)
-    return encode_image = img.toString('base64')
+    let img = fs.createReadStream(file.path)
+    return img
   })
 
   const result = imgArray.map((src, index) => {
@@ -99,15 +99,17 @@ exports.deleteImages = async function (req, res, next){
 
   let imgArray = files.map((file) => {
     let img = fs.readFileSync(file.path)
-    return encode_image = img.toString('base64')
+    return img
   })
 
   const result = imgArray.map((src, index) => {
     return Image.deleteOne({ filename: files[index].originalname }).then(() => {
+      /*
       fs.unlinkSync('../uploads/'+files[index].originalname, (err) => {
         if (err) { console.log("Failed to delete local image:" + err) }
         else { console.log("Successfully deleted local image.") }
       })
+      */
       return { msg: `${files[index].originalname} Deleted successfully.`}
     }).catch(err => {
       return Promise.reject({ err: err.message || `Cannot delete ${files[index].originalname} file missing.`})

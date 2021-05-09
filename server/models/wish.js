@@ -11,7 +11,7 @@ const WishSchema = new mongoose.Schema({
         type: String,
         unique: true
     },
-    wishBase64: {
+    content: {
         type: String,
         required: true
     }

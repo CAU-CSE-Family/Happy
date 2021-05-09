@@ -22,8 +22,8 @@ exports.uploadWishes = async function (req, res, next){
   }
 
   let wishArray = files.map((file) => {
-    let wish = fs.readFileSync(file.path)
-    return encode_wish = wish.toString('base64')
+    let wish = fs.createReadStream(file.path)
+    return wish
   })
 
   const result = wishArray.map((src, index) => {
@@ -32,7 +32,7 @@ exports.uploadWishes = async function (req, res, next){
       id_user: googleId,
       id_family: familyId,
       contentType: files[index].mimetype,
-      wishBase64: src
+      content: src
     }
 
     const newWish = new Wish(final_wish)
@@ -98,16 +98,18 @@ exports.deleteWishes = async function (req, res, next){
   }
 
   let wishArray = files.map((file) => {
-    let wish = fs.readFileSync(file.path)
-    return encode_wish = wish.toString('base64')
+    let wish = fs.createReadStream(file.path)
+    return wish
   })
 
   const result = wishArray.map((src, index) => {
     return Wish.deleteOne({ filename: files[index].originalname }).then(() => {
+      /*
       fs.unlinkSync('../uploads/'+files[index].originalname, (err) => {
         if (err) { console.log("Failed to delete local wishes:" + err) }
         else { console.log("Successfully deleted local wishes.") }
       })
+      */
       return { msg: `${files[index].originalname} Deleted successfully.`}
     }).catch(err => {
       return Promise.reject({ err: err.message || `Cannot delete ${files[index].originalname} file missing.`})
