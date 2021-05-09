@@ -1,14 +1,16 @@
 const Image = require('../models/image')
-
-const fs = require('fs')
+const User  = require('../models/user')
+const fs    = require('fs')
 
 exports.uploadImages = async function (req, res, next){
   
-  const googleId = req.body["id"]
-  const sessionKey = req.body["session"]
-  const familyId = req.body["id_family"]
+  const userData = JSON.stringify(req.body["data"])
+  const googleId = userData["id"]
+  const sessionKey = userData["session"]
+  const familyId = userData["id_family"]
   const files = req.files
 
+  console.log(googleId+"\n")
   User.findOne({ id: googleId, session: sessionKey, id_family: familyId }).then(existingUser => {
     if (!existingUser) {
       res.json({result: false, message: "No matching user&familyID&session in the DB."})
@@ -23,7 +25,7 @@ exports.uploadImages = async function (req, res, next){
 
   let imgArray = files.map((file) => {
     let img = fs.createReadStream(file.path)
-    return img
+    return encode_image = img.tostring('base64')
   })
 
   const result = imgArray.map((src, index) => {
@@ -99,7 +101,7 @@ exports.deleteImages = async function (req, res, next){
 
   let imgArray = files.map((file) => {
     let img = fs.readFileSync(file.path)
-    return img
+    return encode_image = img.tostring('base64')
   })
 
   const result = imgArray.map((src, index) => {
