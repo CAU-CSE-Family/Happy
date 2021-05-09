@@ -5,7 +5,7 @@ const fs     = require('fs')
 exports.uploadImages = async function (req, res, next){
   
   const files = req.files
-  const googleId, familyId = verify.verifyUser(JSON.stringify(req.body))
+  let googleId, familyId = verify.verifyUser(req.body)
 
   if (!googleId) {
     const err = new Error("No matching user&familyID&session in the DB.")
@@ -57,7 +57,7 @@ exports.uploadImages = async function (req, res, next){
 
 exports.getImages = async function (req, res){
 
-  const googleId, familyId = verify.verifyUser(JSON.stringify(req.body))
+  let googleId, familyId = verify.verifyUser(req.body)
 
   if (!googleId) {
     const err = new Error("No matching user&familyID&session in the DB.")
@@ -79,7 +79,7 @@ exports.getImages = async function (req, res){
 exports.deleteImages = async function (req, res, next){
 
   const files = req.files
-  const googleId, familyId = verify.verifyUser(JSON.stringify(req.body))
+  let googleId, familyId = verify.verifyUser(JSON.stringify(req.body))
 
   if (!files) {
     const err = new Error("Please choose files.")
