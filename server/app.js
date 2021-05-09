@@ -12,7 +12,8 @@ const connectDB  = require('./config/db')
 connectDB() 
 
 // Static folder
-app.use(express.static(path.join(__dirname, 'public'))) 
+app.use(express.static(path.join(__dirname, 'public')))
+
 // Set global var
 app.use(function (req, res, next) {
   res.locals.user = req.user || null

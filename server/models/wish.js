@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-const wishSchema = new mongoose.Schema({
+const WishSchema = new mongoose.Schema({
     filename: {
         type: String,
         unique: true
@@ -11,10 +11,10 @@ const wishSchema = new mongoose.Schema({
         type: String,
         unique: true
     },
-    imageBase64: {
+    wishBase64: {
         type: String,
         required: true
     }
 })
 
-module.exports = mongoose.model('Image', ImageSchema)
+module.exports = mongoose.model('Wish', WishSchema)
