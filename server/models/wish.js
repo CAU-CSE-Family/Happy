@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-const ImageSchema = new mongoose.Schema({
+const wishSchema = new mongoose.Schema({
     filename: {
         type: String,
         unique: true

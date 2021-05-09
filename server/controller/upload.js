@@ -1,36 +1,78 @@
-const path    = require('path')
-const dotenv  = require('dotenv')
-dotenv.config({ path: './config/config.env' }) // Load config
-
 const Image = require('../models/image')
+const fs = require('fs')
 
-exports.uploadImage = async function (req, res){
-  var obj = {
-    name: req.body.name,
-    desc: req.body.desc,
-    img: {
-      data: fs.readFileSync(path.join(__dirname + '/uploads/' + req.file.filename)),
-      contentType: 'image/png'
+exports.uploadImages = async function (req, res, next){
+  const googleId = req.body.authData["id"]
+  const sessionKey = req.body.authData["session"]
+  const familyId = req.body["family"]
+  const files = req.files
+
+  User.findOne({ id: googleId, session: sessionKey, id_family: familyId }).then(existingUser => {
+    if (!existingUser) {
+      res.json({result: false, message: "No matching user&familyID&session in the DB."})
     }
+  })
+
+  if (!files) {
+    const err = new Error("Please choose files.")
+    error.httpStatusCode = 400
+    res.json({result: false, message: err})
   }
 
-  Image.create(obj, (err, item) => {
-    if (err) { res.json({result: false, message: err}) }
-    else {
-      item.save()
-      res.json({result: true, message: "Successfully uploaded image."})
+  let imgArray = files.map((file) => {
+    let img = fs.readFileSync(file.path)
+    return encode_image = img.toString('base64')
+  })
+
+  const result = imgArray.map((src, index) => {
+    const final_img = {
+      filename: files[index].originalname,
+      id_user: googleId,
+      id_family: familyId,
+      contentType: files[index].mimetype,
+      imageBase64: src
     }
+
+    const newImage = new Image(final_img)
+    return newImage.save().then(() => {
+      return { msg: `${files[index].originalname} Uploaded Successfully.`}
+    }).catch(err => {
+      if (err) {
+        if (err.name === 'MongoError' && err.code === 11000) {
+          return Promise.reject({ err: `Duplicate ${files[index].originalname}. File already exists.`})
+        }
+        return Promise.reject({ err: err.message || `Cannot Upload ${files[index].originalname} file missing.`})
+      }
+    })
+  })
+
+  Promise.all(result).then(msg => {
+    res.json({result: true, message: msg})
+  }).catch(err => {
+    console.log(err)
+    res.json({result: false, message: err})
   })
 }
 
 exports.getImages = async function (req, res){
-  Image.find({}, (err, items) => {
-    if (err) {
-      console.log(err)
-      res.json({result: false, message: err})
+  const googleId = req.body.authData["id"]
+  const sessionKey = req.body.authData["session"]
+  const familyId = req.body["family"]
+
+  User.findOne({ id: googleId, session: sessionKey, id_family: familyId }).then(existingUser => {
+    if (!existingUser) {
+      res.json({result: false, message: "No matching user ID and session in the DB."})
     }
     else {
-      res.json({result: true, message: "Successfully get images.", images: items})
+      Image.find({ id_family: existingUser["id_family"] }, (err, items) => {
+        if (err) {
+          console.log(err)
+          res.json({result: false, message: err})
+        }
+        else {
+          res.json({result: true, message: "Successfully get images.", images: items})
+        }
+      })
     }
   })
 }
