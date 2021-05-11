@@ -26,7 +26,7 @@ exports.uploadImages = async function (req, res, next){
     try {
       return fs.readFileSync(file.path).toString('base64')
     } catch (err) {
-      return Promise.reject({ err: err.message || `Cannot read ${files[index].originalname} files`})
+      return next(err)
     }
   })
 
@@ -38,17 +38,16 @@ exports.uploadImages = async function (req, res, next){
       contentType: files[index].mimetype,
       imageBase64: src
     }
-
+  
     try {
       new Image(final_img).save()
       return { msg: `${files[index].originalname} Uploaded Successfully` }
-    } catch(err) {
-      if (err.name === 'MongoError' && err.code === 11000) {
-        return Promise.reject({ err: `Duplicate ${files[index].originalname} file already exists`})
-      }
+    } catch (err) {
+      console.log(err)
       return Promise.reject({ err: err.message || `Cannot Upload ${files[index].originalname} file`})
     }
   })
+  
 
   try {
     const message = await Promise.all(saveImgArray)
