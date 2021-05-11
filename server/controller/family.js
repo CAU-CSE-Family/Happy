@@ -1,8 +1,9 @@
 const rand     = require("../public/rand.js")
 const User     = require('../models/user')
 const Family   = require('../models/family')
+const mongoose = require('mongoose')
 
-const createFamilyId = async function (){
+function createFamilyId(){
   var familyId = ""
   do {
     familyId = rand.randomString(16)
@@ -19,23 +20,32 @@ exports.createFamily = async function (req, res){
   const googleId = req.body["id"]
   const sessionKey = req.body["session"]
   const familyId = createFamilyId()
-  const clientFamily = {
-    id: familyId,
-    user_list: [{ id_user: googleId }]
-  }
-  
-  User.findOneAndUpdate(
-    { id: googleId, session: sessionKey },
-    { $set : { id_family: familyId } }
-  ).then(existingUser => {
-    if (existingUser) { new Family(clientFamily).save() }
-    else { res.json({result: false, message: "User ID and session not vaild"}) }
-  }).catch(err => {
-    console.log(err)
-    res.json({result: false, message: "Error occured in DB"})
-  })
+  var result = true
+  var msg = "Successfully create family"
 
-  res.json({result: true, message: "Successfully create family", family: familyId})
+  try {
+    const user = await User.findOneAndUpdate(
+      { id: googleId, session: sessionKey },
+      { $set : { id_family: familyId } }
+    )
+    if (!user) {
+      result = false
+      msg = "User ID and session not vaild"
+    }
+    else {
+      const clientFamily = {
+        id: familyId,
+        user_list: { id_user: googleId }
+      }
+      new Family(clientFamily).save()
+    }
+  } catch(err) {
+    console.log(err)
+    result = false
+    msg = "Error occured in DB"
+  }
+
+  res.json({result: result, message: msg, family: familyId})
 }
 
 exports.joinFamily = async function (req, res){
@@ -44,29 +54,50 @@ exports.joinFamily = async function (req, res){
   const googleId = req.body.authData["id"]
   const sessionKey = req.body.authData["session"]
   const familyId = req.body["family"]
+  var tempFamilyId = ""
+  var result = true
+  var msg = "Successfully join family"
 
-  Family.findOne({ id: familyId }).then(existingFamily => {
-    if (!existingFamily) { res.json({result: false, message: "No family ID in DB"}) }
-    else {
-      User.findOneAndUpdate(
-        { id: googleId, session: sessionKey },
-        { $set : { id_family: familyId } }
-      ).then(existingUser => {
-        if (!existingUser) { res.json({result: false, message: "User ID and session not vaild"}) }
-      })
-      Family.findOneAndUpdate(
-        { id: familyId },
-        { $push : { user_list: { id_user: googleId } } }
-      ).then(existingFamily => {
-        if (!existingFamily) { res.json({result: false, message: "User ID and session not vaild"}) }
-      })
+  try {
+    const user = await User.findOneAndUpdate(
+      { id: googleId, session: sessionKey },
+      { $set : { id_family: familyId } }
+    )
+    if (!user) {
+      result = false
+      msg = "User ID and session not vaild"
     }
-  }).catch(err => {
+    else {
+      tempFamilyId = user["id_family"]
+      try {
+        const family = await Family.findOneAndUpdate(
+          { id: familyId },
+          { $push : { user_list: { id_user: googleId } } }
+        )
+        if (!family) {
+          result = false
+          msg = "Family ID is not in DB"
+        }
+      } catch (err) {
+        console.log(err)
+        result = false
+        msg = "Error occured in DB"
+      }
+    }
+  } catch (err) {
     console.log(err)
-    res.json({result: false, message: "Error occured in DB"})
-  })
+    result = false
+    msg = "Error occured in DB"
+  }
 
-  res.json({result: true, message: "Successfully join family", family: familyId})
+  if (result === false) {
+    await User.findOneAndUpdate(
+      { id: googleId, session: sessionKey },
+      { $set : { id_family: tempFamilyId } }
+    )
+  }
+
+  res.json({result: result, message: msg, family: familyId})
 }
 
 exports.leaveFamily = async function (req, res){
@@ -74,25 +105,42 @@ exports.leaveFamily = async function (req, res){
 
   const googleId = req.body["id"]
   const sessionKey = req.body["session"]
+  var result = true
+  var msg = "Successfully leave family"
 
-  User.findOne({ id: googleId, session: sessionKey }).then(existingUser => {
-    if (!existingUser) { res.json({result: false, message: "User ID and session not vaild"}) }
-    else {
-      const familyId = existingUser["id_family"]
-      Family.collection.countDocuments({ id: familyId }).then(existingFamily => {
-        if (!existingFamily) { res.json({result: false, message: "No family ID in DB"}) }
-        else {
-          Family.findOneAndUpdate({ id: familyId }, 
-            { $pull : { user_list: { id_user: googleId } } })
-          User.findOneAndUpdate({ id: googleId, session: sessionKey },
-            { $set : { id_family: null } })
+  try {
+    const user = await User.findOne({ id: googleId, session: sessionKey })
+    if (!user) {
+      result = false
+      msg = "User ID and session not vaild"
+    } else {
+      try {
+        const family = await Family.findOneAndUpdate(
+          { id: user["id_family"] },
+          { $pull: { user_list: { id_user: googleId } } },
+          { upsert: false, multi: true }
+        )
+        console.log("Leave family ID: ", user["id_family"])
+        if (!family) {
+          result = false
+          msg = "Family ID not vaild"
+        } else {
+          await User.findOneAndUpdate(
+            { id: googleId, session: sessionKey },
+            { $set : { id_family: null } }
+          )
         }
-      })
+      } catch (err) {
+        console.log(err)
+        result = false
+        msg = "Error occured in DB"
+      }
     }
-  }).catch(err => {
+  } catch (err) {
     console.log(err)
-    res.json({result: false, message: "Error occured in DB"})
-  })
-
-  res.json({result: true, message: "Successfully leave family"})
+    result = false
+    msg = "Error occured in DB"
+  }
+  
+  res.json({result: result, message: msg})
 }

@@ -4,15 +4,16 @@ exports.verifyUser = async function (req){
   const data = JSON.parse(req.data)
   console.log(data)
 
-  const googleId = data["id"]
-  const sessionKey = data["session"]
-  const familyId = data["id_family"]
+  var userData = []
 
-  User.findOne({ id: googleId, session: sessionKey, id_family: familyId }).then(existingUser => {
+  User.findOne({ id: data["id"], session: data["session"], id_family: data["id_family"] }).then(existingUser => {
     if (!existingUser) {
-      googleId = null
-      familyId = null
+      userData.push(null, null)
+      return userData
+    }
+    else {
+      userData.push(String(data["id"]), String(data["id_family"]))
+      return userData
     }
   })
-  return [String(googleId), String(familyId)]
 }

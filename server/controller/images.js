@@ -5,10 +5,11 @@ const fs     = require('fs')
 exports.uploadImages = async function (req, res, next){
   
   const files = req.files
-  let userData = verify.verifyUser(req.body)
-  let googleId = userData[0]
-  let familyId = userData[1]
+  const userData = await verify.verifyUser(req.body)
+  const googleId = userData[0]
+  const familyId = userData[1]
 
+  console.log(userData)
   if (!googleId) {
     const err = new Error("No matching user&familyID&session in the DB.")
     err.httpStatusCode = 400

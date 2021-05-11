@@ -11,12 +11,6 @@ const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID
 )
 
-const date      = Date.now().toString()
-const uri       = `${process.env.SENS_SERVICEID}`
-const secretKey = `${process.env.SENS_SERVICESECRET}`
-const accessKey = `${process.env.SENS_ACCESSKEYID}`
-const url       = `https://sens.apigw.ntruss.com/sms/v2/services/${encodeURIComponent(uri)}/messages`
-
 function makeSignature(serviceId, timeStamp, accessKey, secretKey) {
   const method    = 'POST'
   const space     = ' '
@@ -49,37 +43,42 @@ exports.requestSmsCode = async function (req, res) {
   cache.put(phoneNumber, authNumber, vaildTime)
   timer.countdown(Number(vaildTime))
 
-  axios.post(url,
-    JSON.stringify({
-      type: "SMS",
-      contentType: "COMM",
-      countryCode: "82",
-      from: `${process.env.SENS_SENDNUMBER}`,
-      content: `[Happy] 인증번호 ${authNumber}를 입력해주세요.`,
-      messages: [
-        { to: `${phoneNumber}` }
-      ]
-    }), {
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'x-ncp-apigw-timestamp': date,
-      'x-ncp-iam-access-key': accessKey,
-      'x-ncp-apigw-signature-v2': makeSignature(encodeURIComponent(uri), date, accessKey, secretKey),
-    }
-  })
-  .then(response => {
+  var result = true
+  var msg = "Successfully send authentication message"
+
+  try {
+    const date = Date.now().toString()
+    const uri = `${process.env.SENS_SERVICEID}`
+    const url = `https://sens.apigw.ntruss.com/sms/v2/services/${encodeURIComponent(uri)}/messages`
+    const secretKey = `${process.env.SENS_SERVICESECRET}`
+    const accessKey = `${process.env.SENS_ACCESSKEYID}`
+
+    const response = await axios.post(url,
+      JSON.stringify({
+        type: "SMS",
+        contentType: "COMM",
+        countryCode: "82",
+        from: `${process.env.SENS_SENDNUMBER}`,
+        content: `[Happy] 인증번호 ${authNumber}를 입력해주세요.`,
+        messages: [
+          { to: `${phoneNumber}` }
+        ]
+      }), {
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'x-ncp-apigw-timestamp': date,
+        'x-ncp-iam-access-key': accessKey,
+        'x-ncp-apigw-signature-v2': makeSignature(encodeURIComponent(uri), date, accessKey, secretKey),
+      }
+    })
     console.log('Response: ', response.data)
-    res.json({result: true, messages: "인증번호 발송 완료"})
-  })
-  .catch(error => {
-    console.log(error.status)
-    if (error.data == undefined) {
-      res.json({result: false, messages: "error: undefined"})
-    }
-    else {
-      res.json({result: false, messages: "인증번호 발송 오류"})
-    }
-  })
+  } catch(err) {
+    console.log(err)
+    result = false
+    msg = "Error on server sending authentication message"
+  }
+
+  res.json({result: result, message: msg})
 }
 
 exports.signUp = async function (req, res) {
@@ -106,26 +105,40 @@ exports.signUp = async function (req, res) {
     id_family: null
   }
 
-  User.findOne({ id: type + googleId }).then(existingUser => {
-    if (!existingUser) { new User(clientUser).save() }
-    else { res.end("이미 존재하는 유저입니다.") }
-  })
+  var result = false
+  var msg = ""
+  try {
+    var is_duplicated = false
+    const user = await User.findOne({ id: type + googleId })
+    if (user) { is_duplicated = true }
+  } catch (err) {
+    console.log(err)
+    msg = "Error occured in DB"
+  } finally {
+    if (!phoneNumber) {
+      msg = "Cache data deleted: authentication timed out"
+    }
+    else if (!cache.get(phoneNumber)) {
+      msg = "Authentication number is not entered"
+    }
+    else if (is_duplicated) {
+      msg = "This user ID is already in DB"
+    }
+    else if (cache.get(phoneNumber) == authNumber) {
+      result = true
+      msg = "Sucessfully verified"
+    }
+    else {
+      msg = "Wrong request: Not verified access"
+    }
+  }
 
-  if (!phoneNumber) {
-    console.log('Time out')
-    res.json({result: false, message: "캐시 데이터 삭제됨: 인증 시간 초과"})
-  }
-  else if (!cache.get(phoneNumber)) {
-    console.log('No auth Number')
-    res.json({result: false, message: "인증번호가 입력되지 않았습니다."})
-  }
-  else if (cache.get(phoneNumber) == authNumber) {
-    console.log('Sucessfully verified')
-    res.json({result: true, message: "회원가입이 완료되었습니다.", user: clientUser})
+  if (result) {
+    new User(clientUser).save()
+    res.json({result: result, message: msg, user: clientUser})
   }
   else {
-    console.log('Wrong request: Not verified')
-    res.json({result: false, message: "잘못된 요청"})
+    res.json({ result: result, message: msg })
   }
 }
 

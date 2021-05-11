@@ -1,3 +1,4 @@
+const family = require('../models/family')
 const User     = require('../models/user')
 
 exports.getMembers = async function (req, res){
@@ -5,41 +6,52 @@ exports.getMembers = async function (req, res){
 
   const googleId = req.body["id"]
   const sessionKey = req.body["session"]
+  const members = []
+  var familyId = ""
+  var result = false
+  var msg = ""
 
-  User.findOne({ id: googleId, session: sessionKey }).then(existingUser => {
-    if (!existingUser) {
-      res.json({result: false, message: "No matching user ID and session in the DB."})
+  try {
+    const user = await User.findOne({ id: googleId, session: sessionKey })
+    if (!user) {
+      msg =  "No matching user ID and session in the DB"
     }
     else {
-      const members = []
-      User.find({ id_family: existingUser["id_family"] }).then(existingFamily => {
-        console.log(existingFamily)
-        if (!existingFamily) {
-          console.log("No matching family ID in the DB.")
-          res.json({result: false, message: "매칭되는 family ID가 없습니다."})
-        }
-        else if (existingFamily) {
-          existingFamily.forEach(member => {
-            const MemberData = {
-              "id": member.id,
-              "profileData": ProfileData = {
-                "name": member.name,
-                "phone": member.phone,
-                "photoUrl": member.photo_url
-              }
+      if (user["id_family"] == null) {
+        msg = "No members matched"
+        throw "NoMembersMatched"
+      }
+      else {
+        familyId = user["id_family"]
+        
+        const userDocuments = await User.find({ id_family: user["id_family"] })
+        userDocuments.forEach(member => {
+          const MemberData = {
+            "id": member.id,
+            "profileData": ProfileData = {
+              "name": member.name,
+              "phone": member.phone,
+              "photoUrl": member.photo_url
             }
-            members.push(MemberData)
-          })
-          res.json({result: true, message: "Members of family", family: existingUser["id_family"], members: members})
-        }
-      }).catch(err => {
-        console.log(err)
-        res.json({result: false, message: err})
-      })
+          }
+          members.push(MemberData)
+        })
+        result = true
+        msg = "Members of family"
+      }
     }
-  }).catch(err => {
+  } catch (err) {
     console.log(err)
-    res.json({result: false, message: err})
-  })
+    if (err != "NoMembersMatched") {
+      msg = "Error occured in DB"
+    }
+  }
+  
+  if (result) {
+    res.json({result: result, message: msg, family: familyId, members: members})
+  }
+  else {
+    res.json({result: result, message: msg})
+  }
 }
 
