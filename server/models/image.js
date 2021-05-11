@@ -2,14 +2,13 @@ const mongoose = require('mongoose')
 
 const ImageSchema = new mongoose.Schema({
     filename: {
-        type: String,
-        unique: true
+        type: String
     },
     id_user: String,
     id_family: String,
     contentType: {
         type: String,
-        unique: true
+        unique: false
     },
     imageBase64: {
         type: String,

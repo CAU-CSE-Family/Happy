@@ -5,29 +5,32 @@ const fs     = require('fs')
 exports.uploadImages = async function (req, res, next){
   
   const files = req.files
-  const userData = await verify.verifyUser(req.body)
+  const userData = await verify.verifyUser(JSON.parse(req.body.data))
   const googleId = userData[0]
   const familyId = userData[1]
-
   console.log(userData)
+
   if (!googleId) {
-    const err = new Error("No matching user&familyID&session in the DB.")
+    const err = new Error ("No matching user&familyID&session in the DB")
     err.httpStatusCode = 400
     return next(err)
   }
 
   if (!files) {
-    const err = new Error("Please choose files.")
+    const err = new Error ("Please choose the files")
     err.httpStatusCode = 400
     return next(err)
   }
 
-  let imgArray = files.map((file) => {
-    let img = fs.readFileSync(file.path)
-    return encode_image = img.tostring('base64')
+  const imgArray = await files.map((file) => {
+    try {
+      return fs.readFileSync(file.path).toString('base64')
+    } catch (err) {
+      return Promise.reject({ err: err.message || `Cannot read ${files[index].originalname} files`})
+    }
   })
 
-  const result = imgArray.map((src, index) => {
+  const saveImgArray = await imgArray.map((src, index) => {
     const final_img = {
       filename: files[index].originalname,
       id_user: googleId,
@@ -36,26 +39,24 @@ exports.uploadImages = async function (req, res, next){
       imageBase64: src
     }
 
-    const newImage = new Image(final_img)
-    return newImage.save().then(() => {
-      fs.unlinkSync(file.path)
-      return { msg: `${files[index].originalname} Uploaded Successfully.`}
-    }).catch(err => {
-      if (err) {
-        if (err.name === 'MongoError' && err.code === 11000) {
-          return Promise.reject({ err: `Duplicate ${files[index].originalname}. File already exists.`})
-        }
-        return Promise.reject({ err: err.message || `Cannot Upload ${files[index].originalname} file missing.`})
+    try {
+      new Image(final_img).save()
+      return { msg: `${files[index].originalname} Uploaded Successfully` }
+    } catch(err) {
+      if (err.name === 'MongoError' && err.code === 11000) {
+        return Promise.reject({ err: `Duplicate ${files[index].originalname} file already exists`})
       }
-    })
+      return Promise.reject({ err: err.message || `Cannot Upload ${files[index].originalname} file`})
+    }
   })
 
-  Promise.all(result).then(msg => {
-    res.json({result: true, message: msg})
-  }).catch(err => {
+  try {
+    const message = await Promise.all(saveImgArray)
+    res.json({result: true, message: message})
+  } catch (err) {
     console.log(err)
     res.json({result: false, message: err})
-  })
+  }
 }
 
 exports.getImages = async function (req, res){
