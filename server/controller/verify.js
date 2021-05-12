@@ -1,12 +1,10 @@
 const User = require('../models/user')
 
-exports.verifyUser = async function (req){
-  const data = req.data
-  const userData = []
-
+exports.verifyUser = async function (data){
   console.log(data)
+  const userData = []
   try {
-    const user = await User.findOne({ id: data["id"], session: data["session"], id_family: data["id_family"] })
+    const user = await User.findOne({ id: data["id"], session: data["session"]})
     if (!user) {
       userData.push(null, null)
     }

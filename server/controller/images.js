@@ -3,9 +3,11 @@ const Image  = require('../models/image')
 const fs     = require('fs')
 
 exports.uploadImages = async function (req, res, next){
-  
+  console.log(req.body)
   const files = req.files
-  const userData = await verify.verifyUser(JSON.parse(req.body.data))
+  console.log(files, "\n")
+
+  const userData = await verify.verifyUser(JSON.parse(req.body.authData))
   const googleId = userData[0]
   const familyId = userData[1]
   console.log(userData)

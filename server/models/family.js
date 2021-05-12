@@ -9,6 +9,7 @@ const FamilySchema = new mongoose.Schema({
   user_list: [{
     id_user: {
       type: String
+      
     }
   }]
 })
