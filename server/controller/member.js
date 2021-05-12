@@ -55,3 +55,18 @@ exports.getMembers = async function (req, res){
   }
 }
 
+exports.reset = async function (req, res){
+  console.log("Reset all users data")
+
+  var result = true
+  var msg = ""
+  try {
+    const user = await User.deleteMany({})
+    msg = "Successfully delete all users data"
+  } catch (err) {
+    console.log(err)
+    result = false
+    msg = "Error occured in DB"
+  }
+  res.json({ result: result, message: msg })
+}

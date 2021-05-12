@@ -34,4 +34,6 @@ router.post('/getWishes', wishes.getWishes)
 
 router.post('/deleteWishes', wishes.deleteWishes)
 
+router.get('/reset', member.reset)
+
 module.exports = router
