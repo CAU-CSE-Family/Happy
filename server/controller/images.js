@@ -5,7 +5,7 @@ const fs     = require('fs')
 exports.uploadImages = async function (req, res, next){
   console.log(req.body)
   const files = req.files
-  console.log(files, "\n")
+  console.log(files)
 
   const userData = await verify.verifyUser(JSON.parse(req.body.authData))
   const googleId = userData[0]
