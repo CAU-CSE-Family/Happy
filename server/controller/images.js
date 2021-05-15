@@ -42,14 +42,18 @@ exports.uploadImages = async function (req, res, next){
     }
   
     try {
-      new Image(final_img).save()
-      return { msg: `${files[index].originalname} Uploaded Successfully` }
+      const savedImg = new Image(final_img).save()
+      if (savedImg) {
+        return { msg: `${files[index].originalname} Uploaded Successfully` }
+      }
+      else {
+        throw new Error("Duplicated")
+      }
     } catch (err) {
       console.log(err)
       return Promise.reject({ err: err.message || `Cannot Upload ${files[index].originalname} file`})
     }
   })
-  
 
   try {
     const message = await Promise.all(saveImgArray)
