@@ -1,8 +1,10 @@
 const mongoose = require('mongoose')
 
 const ImageSchema = new mongoose.Schema({
-    filename: {
-        type: String
+    fileUrl: {
+        type: String,
+        required: true,
+        unique: true
     },
     id_user: String,
     id_family: String,
@@ -13,10 +15,6 @@ const ImageSchema = new mongoose.Schema({
     contentType: {
         type: String,
         unique: false
-    },
-    imageBase64: {
-        type: String,
-        required: true
     }
 })
 

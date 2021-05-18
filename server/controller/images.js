@@ -3,14 +3,14 @@ const Image  = require('../models/image')
 const fs     = require('fs')
 
 exports.uploadImages = async function (req, res, next){
-  console.log(req.body)
+  console.log("uploadImages:\n", req.body)
   const files = req.files
-  console.log(files)
+  console.log("uploading files:\n", files)
 
   const userData = await verify.verifyUser(JSON.parse(req.body.authData))
   const googleId = userData[0]
   const familyId = userData[1]
-  console.log(userData)
+  console.log("user\'s auth data: ", userData)
 
   if (!googleId) {
     const err = new Error ("No matching user&familyID&session in the DB")
@@ -34,11 +34,10 @@ exports.uploadImages = async function (req, res, next){
 
   const saveImgArray = await imgArray.map((src, index) => {
     const final_img = {
-      filename: files[index].originalname,
+      fileUrl: files[index].path,
       id_user: googleId,
       id_family: familyId,
       contentType: files[index].mimetype,
-      imageBase64: src
     }
   
     try {
