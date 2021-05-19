@@ -65,9 +65,6 @@ exports.uploadImages = async function (req, res, next){
 
 exports.getImages = async function (req, res){
 
-  const fileUrls = req.body.url
-  console.log("file urls:\n", fileUrls)
-
   const userData = await verify.verifyUser(req.body.authData)
   const googleId = userData[0]
   const familyId = userData[1]
@@ -78,15 +75,8 @@ exports.getImages = async function (req, res){
     err.httpStatusCode = 400
     res.json({result: false, message: err})
   }
-
-  if (!fileUrls) {
-    const err = new Error ("Please choose the files")
-    err.httpStatusCode = 400
-    res.json({result: false, message: err})
-  }
-
+  
   try {
-    const urls = []
     const images = await Image.find({ id_family: familyId })
     images.map((src) => {
       urls.push(src["url"])
