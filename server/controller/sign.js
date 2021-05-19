@@ -116,6 +116,7 @@ exports.signUp = async function (req, res) {
   } catch (err) {
     console.log(err)
     msg = "Error occured in DB"
+    res.status(400).send(msg)
   } finally {
     if (!phoneNumber) {
       msg = "Cache data deleted: authentication timed out"

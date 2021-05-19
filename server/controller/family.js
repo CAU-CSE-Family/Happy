@@ -1,7 +1,7 @@
-const rand     = require("../public/rand.js")
+const rand     = require('../public/rand.js')
 const User     = require('../models/user')
 const Family   = require('../models/family')
-const mongoose = require('mongoose')
+const jwt      = require('jsonwebtoken')
 
 function createFamilyId(){
   var familyId = ""
@@ -15,37 +15,45 @@ function createFamilyId(){
 }
 
 exports.createFamily = async function (req, res){
-  console.log("Create Family:\n", req.body)
+  console.log("Create Family:\n", req.headers)
 
-  const googleId = req.body["id"]
-  const sessionKey = req.body["session"]
-  const familyId = createFamilyId()
-  var result = true
-  var msg = "Successfully create family"
-
+  const token = req.headers['token']
   try {
-    const user = await User.findOneAndUpdate(
-      { id: googleId, session: sessionKey },
-      { $set : { id_family: familyId } }
-    )
-    if (!user) {
-      result = false
-      msg = "User ID and session not vaild"
-    }
-    else {
+    const payload = jwt.verify(token, process.env.SECRET_KEY)
+    console.log("\npayload: ", payload)
+    const googleId = payload["id"]
+    const familyId = createFamilyId()
+    try {
       const clientFamily = {
         id: familyId,
         user_list: { id_user: googleId }
       }
-      new Family(clientFamily).save()
+      const newFamily = new Family(clientFamily).save()
+      if (!newFamily) {
+        res.status(401).json({ msg: "Error in DB on creating family" })
+      }
+      else {
+        const user = await User.findOneAndUpdate(
+          { id: googleId },
+          { $set : { id_family: familyId } }
+        )
+        if (!user) {
+          const deletedFamily = await Family.deleteOne({ id: clientFamily.id })
+          console.log("User ID and session not vaild, delete family: ", deletedFamily)
+          res.status(401).json({ msg: "User ID and session not vaild" })
+        }
+        else {
+          res.status(200).json({ familyId: familyId })
+        }
+      }
+    } catch (err) {
+      res.status(401).json({ msg: err })
+		  next(err)
     }
-  } catch(err) {
-    console.log(err)
-    result = false
-    msg = "Error occured in DB"
+  } catch (err) {
+    res.status(401).json({ msg: err })
+		next(err)
   }
-
-  res.json({result: result, message: msg, family: familyId})
 }
 
 exports.joinFamily = async function (req, res){
