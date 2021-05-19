@@ -18,7 +18,8 @@ exports.createFamily = async function (req, res){
   console.log("Create Family:\n", req.headers)
 
   const token = req.headers['authorization'].split(" ")[1]
-
+  console.log("token: ", token)
+  
   try {
     const payload = jwt.verify(token, process.env.SECRET_KEY)
     console.log("\npayload: ", payload)
