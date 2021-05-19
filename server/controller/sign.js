@@ -45,7 +45,6 @@ exports.getSmsCode = async function (req, res) {
   cache.put(phoneNumber, authNumber, vaildTime)
   timer.countdown(Number(vaildTime))
 
-  var result = true
   var msg = "Successfully send authentication message"
 
   try {
@@ -76,7 +75,6 @@ exports.getSmsCode = async function (req, res) {
     console.log('Response: ', response.data)
   } catch(err) {
     console.log(err)
-    result = false
     msg = "Error on server sending authentication message"
     res.status(405).send(msg)
   }
@@ -149,7 +147,7 @@ exports.signUp = async function (req, res) {
     res.json(userDataResponse)
   }
   else {
-    res.status(400).send("Failed to sign up")
+    res.status(400).send(msg)
   }
 }
 
