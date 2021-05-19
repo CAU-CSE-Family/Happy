@@ -12,7 +12,7 @@ router.post('/signUp', sign.signUp)
 
 router.post('/signIn', sign.signIn)
 
-router.post('/createFamily', family.createFamily)
+router.get('/family', family.createFamily)
 
 router.post('/joinFamily', family.joinFamily)
 
