@@ -6,7 +6,7 @@ const images = require('../controller/images')
 const wishes = require('../controller/wishes')
 const store  = require('../config/multer')
 
-router.post('/requestSmsCode', sign.requestSmsCode)
+router.post('/getSmsCode', sign.getSmsCode)
 
 router.post('/signUp', sign.signUp)
 
