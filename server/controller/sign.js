@@ -30,7 +30,7 @@ function makeSignature(serviceId, timeStamp, accessKey, secretKey) {
   return hash.toString(cryptoJs.enc.Base64)
 }
 
-exports.requestSmsCode = async function (req, res) {
+exports.getSmsCode = async function (req, res) {
   console.log("requestSmsCode:\n", req.body)
 
   const phoneNumber = req.body.phone
@@ -76,9 +76,11 @@ exports.requestSmsCode = async function (req, res) {
     console.log(err)
     result = false
     msg = "Error on server sending authentication message"
+    res.status(405).send(msg)
   }
 
-  res.json({result: result, message: msg})
+  res.status(200)
+  res.send(msg)
 }
 
 exports.signUp = async function (req, res) {
@@ -135,10 +137,11 @@ exports.signUp = async function (req, res) {
 
   if (result) {
     new User(clientUser).save()
-    res.json({result: result, message: msg, user: clientUser})
+    res.status(200)
+    res.send(msg)
   }
   else {
-    res.json({ result: result, message: msg })
+    res.status(405).send("Failed to sign up")
   }
 }
 
