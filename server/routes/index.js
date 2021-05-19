@@ -12,8 +12,6 @@ router.post('/signUp', sign.signUp)
 
 router.post('/signIn', sign.signIn)
 
-router.post('/signInWithToken', sign.signInWithToken)
-
 router.post('/createFamily', family.createFamily)
 
 router.post('/joinFamily', family.joinFamily)

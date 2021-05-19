@@ -136,15 +136,19 @@ exports.signUp = async function (req, res) {
   }
 
   if (result) {
-    new User(clientUser).save()
-    const userToken = jwt.sign({ id: clientUser.id }, process.env.SECRET_KET)
-    const userDataResponse = {
-      token: userToken,
-      userId: clientUser.id,
-      familyId: clientUser.id_family
+    try {
+      const userToken = jwt.sign({ id: clientUser.id }, `${process.env.SECRET_KET}`)
+      const userDataResponse = {
+        token: userToken,
+        userId: clientUser.id,
+        familyId: clientUser.id_family
+      }
+      new User(clientUser).save()
+      res.status(200)
+      res.json(userDataResponse)
+    } catch (err) {
+      res.status(400).send(err)
     }
-    res.status(200)
-    res.json(userDataResponse)
   }
   else {
     res.status(400).send(msg)
@@ -152,40 +156,34 @@ exports.signUp = async function (req, res) {
 }
 
 exports.signIn = async function (req, res){
-  console.log("signIn:\n", req.body)
-
-  const googleId = req.body["id"]
-  User.findOne({ id: googleId }).then(existingUser => {
-    if (!existingUser) {
-      console.log("User\'s ID is not in DB")
-      res.status(401).send("User\'s ID is not in DB")
-    }
-    else if (existingUser) {
-      console.log("User data sent(SignIn):\n", existingUser)
-      res.json({result: true, message: "Successfully sign in", user: existingUser})
-    }
-  })
-}
-
-exports.signInWithToken = async function (req, res){
   console.log("signInWithToken:\n", req.body)
 
-  const token = req.body["token"]
+  const token = req.body.oAuthData["oAuthToken"]
   const ticket = await client.verifyIdToken({
     idToken: token,
     audience: process.env.GOOGLE_CLIENT_ID
   })
   const payload = ticket.getPayload()
   const googleId = payload['sub']
-  const type = req.body["type"]
+  const type = req.body.oAuthData["type"]
 
-  User.findOne({ id: type + googleId }).then(existingUser => {
-    if (!existingUser) {
-      res.json({result: false, message: "ID token is not vaild."})
+  try {
+    const user = await User.findOne({ id: type + googleId })
+    if (!user) {
+      res.status(401).send("User\'s ID is not in DB")
     }
-    else if (existingUser) {
-      res.json({result: true, message: "Successfully sign in with token", user: existingUser})
+    else {
+      const userToken = jwt.sign({ id: user["id"] }, `${process.env.SECRET_KET}`)
+      const userDataResponse = {
+        token: userToken,
+        userId: user["id"],
+        familyId: user["id_family"]
+      }
+      res.status(200)
+      res.json(userDataResponse)
     }
-  })
+  } catch (err) {
+    res.status(401).send(err)
+  }
 }
 
