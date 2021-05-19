@@ -17,13 +17,12 @@ function createFamilyId(){
 exports.createFamily = async function (req, res){
   console.log("Create Family:\n", req.headers)
 
-  const token = req.headers['authorization'].split(" ")[1]
+  var token = req.headers['authorization'].split(" ")[1]
   token = token.replace("\"", "")
   console.log(token)
 
->>>>>>> c232f876ae5476c3e395e716ec198c718d55766e
   try {
-    const payload = jwt.verify(token, process.env.SECRET_KEY)
+    const payload = jwt.verify(token, `${process.env.SECRET_KEY}`)
     console.log("\npayload: ", payload)
     const googleId = payload['id']
     const familyId = createFamilyId()
