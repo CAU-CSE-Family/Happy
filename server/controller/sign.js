@@ -1,12 +1,14 @@
-const timer     = require("../public/timer.js")
-const rand      = require("../public/rand.js")
+const timer     = require('../public/timer.js')
+const rand      = require('../public/rand.js')
 const User      = require('../models/user')
 const axios     = require('axios')
 const cryptoJs  = require('crypto-js')
-const cache     = require("memory-cache")
+const cache     = require('memory-cache')
+const jwt       = require('jsonwebtoken')
 
 // Create google oauth client to verify token
 const { OAuth2Client } = require('google-auth-library')
+const family = require('../models/family.js')
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID
 )
@@ -86,24 +88,24 @@ exports.getSmsCode = async function (req, res) {
 exports.signUp = async function (req, res) {
   console.log("signUp:\n", req.body)
 
-  const token = req.body.tokenData["token"]
+  const token = req.body.oAuthData["oAuthToken"]
   const ticket = await client.verifyIdToken({
     idToken: token,
     audience: process.env.GOOGLE_CLIENT_ID
   })
   const payload = ticket.getPayload()
   const googleId = payload['sub']
-  const type = req.body.tokenData["type"]
+  const type = req.body.oAuthData["type"]
   const sessionKey = rand.randomString(32)
-  const authNumber = req.body.smsCode
+  const authNumber = req.body.code
   const phoneNumber = cache.keys()[0]
 
   const clientUser = {
     id: type + googleId,
     session: sessionKey,
-    name: req.body.profileData["name"],
-    phone: phoneNumber || req.body.profileData["phone"],
-    photo_url: req.body.profileData["photoUrl"],
+    name: req.body.oAuthData["name"],
+    phone: phoneNumber || req.body["phone"],
+    photo_url: req.body.oAuthData["photoUrl"],
     id_family: null
   }
 
@@ -137,11 +139,17 @@ exports.signUp = async function (req, res) {
 
   if (result) {
     new User(clientUser).save()
+    const userToken = jwt.sign({ id: clientUser.id }, process.env.SECRET_KET)
+    const userDataResponse = {
+      token: userToken,
+      userId: clientUser.id,
+      familyId: clientUser.id_family
+    }
     res.status(200)
-    res.send(msg)
+    res.json(userDataResponse)
   }
   else {
-    res.status(405).send("Failed to sign up")
+    res.status(400).send("Failed to sign up")
   }
 }
 
