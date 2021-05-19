@@ -22,8 +22,8 @@ exports.createFamily = async function (req, res){
   console.log(token)
 
   try {
-    const payload = jwt.verify(token, `${process.env.SECRET_KEY}`)
     console.log(`${process.env.SECRET_KEY}`)
+    const payload = jwt.verify(token, `${process.env.SECRET_KEY}`)
     console.log("\npayload: ", payload)
     const googleId = payload['id']
     const familyId = createFamilyId()
