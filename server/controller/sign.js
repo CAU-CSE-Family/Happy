@@ -156,16 +156,16 @@ exports.signUp = async function (req, res) {
 }
 
 exports.signIn = async function (req, res){
-  console.log("signInWithToken:\n", req.body)
+  console.log("signIn:\n", req.body)
 
-  const token = req.body.oAuthData["oAuthToken"]
+  const token = req.body["oAuthToken"]
   const ticket = await client.verifyIdToken({
     idToken: token,
     audience: process.env.GOOGLE_CLIENT_ID
   })
   const payload = ticket.getPayload()
   const googleId = payload['sub']
-  const type = req.body.oAuthData["type"]
+  const type = req.body["type"]
 
   try {
     const user = await User.findOne({ id: type + googleId })
