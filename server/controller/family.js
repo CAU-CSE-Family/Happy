@@ -17,8 +17,8 @@ function createFamilyId(){
 exports.createFamily = async function (req, res){
   console.log("Create Family:\n", req.headers)
 
-  const token = req.headers['authorization'].split(" ")[1]
-  
+  const token = req.headers['authorization']
+
   try {
     const payload = jwt.verify(token, process.env.SECRET_KEY)
     console.log("\npayload: ", payload)
@@ -49,11 +49,9 @@ exports.createFamily = async function (req, res){
       }
     } catch (err) {
       res.status(401).json({ msg: err })
-		  next(err)
     }
   } catch (err) {
     res.status(401).json({ msg: err })
-		next(err)
   }
 }
 
