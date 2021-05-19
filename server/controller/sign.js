@@ -149,7 +149,7 @@ exports.signIn = async function (req, res){
   User.findOne({ id: googleId }).then(existingUser => {
     if (!existingUser) {
       console.log("User\'s ID is not in DB")
-      res.json({result: false, message: "회원가입을 진행해 주세요."})
+      res.status(401).send("User\'s ID is not in DB")
     }
     else if (existingUser) {
       console.log("User data sent(SignIn):\n", existingUser)
