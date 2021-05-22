@@ -9,7 +9,7 @@ const jwtauth = {
     var token = String(req.headers.authorization)
     token = token.split(" ")[1]
     token = token.replace("\"", "")
-    console.log("\nToken: " + token)
+    console.log("Token: " + token)
 
     if (!token)
       return res.status(400).json("No token")

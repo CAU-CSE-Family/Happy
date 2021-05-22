@@ -15,7 +15,7 @@ function createFamilyId(){
 }
 
 exports.createFamily = async function (req, res){
-  console.log("Create Family:" + req.id)
+  console.log("Create Family: " + req.id)
   try {
     const googleId = req.id
     const familyId = createFamilyId()
@@ -26,18 +26,18 @@ exports.createFamily = async function (req, res){
 
     const response = await new Family(clientFamily).save()
     console.log(response)
-    if (response.ok != 1) {
-      res.status(401).json({ msg: "Error in DB on creating family" })
+    if (!response.id) {
+      return res.status(401).json({ msg: "Error in DB on creating family" })
     } 
     
     const response2 = await User.findOneAndUpdate(
       { id: googleId },
       { $set : { id_family: familyId } }
     )
-    if (!response2) {
+    if (response2.ok != 1) {
       const response3 = await Family.deleteOne({ id: clientFamily.id })
       console.log("User ID and session not vaild, delete family: ", response3)
-      res.status(401).json({ msg: "User ID and session not vaild" })
+      return res.status(401).json({ msg: "User ID and session not vaild" })
     } 
     res.status(200).json({ familyId: familyId })
   } catch (err) {

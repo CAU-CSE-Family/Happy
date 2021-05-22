@@ -12,6 +12,7 @@ module.exports = {
         const result = {
             token: jwt.sign(payload, secretKey, {algorithm: "HS256", issuer: "happy"})
         }
+        console.log("Token made: ", result.token)
         return result
     },
 
