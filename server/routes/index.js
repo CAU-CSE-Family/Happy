@@ -1,11 +1,11 @@
-const router = require('express').Router()
-const sign   = require('../controller/sign')
-const family = require('../controller/family')
-const member = require('../controller/member')
-const images = require('../controller/images')
-const wishes = require('../controller/wishes')
-const store  = require('../config/multer')
-const jwtauth = require('../middlewares/jwtauth').checkToken
+const router   = require('express').Router()
+const sign     = require('../controller/sign')
+const family   = require('../controller/family')
+const member   = require('../controller/member')
+const image    = require('../controller/image')
+const wish     = require('../controller/wish')
+const store    = require('../config/multer')
+const jwtauth  = require('../middlewares/jwtauth').checkToken
 
 router.post('/getSmsCode', sign.getSmsCode)
 
@@ -19,20 +19,20 @@ router.post('/joinFamily', jwtauth, family.joinFamily)
 
 router.post('/leaveFamily', jwtauth, family.leaveFamily)
 
-router.post('/getMembers', member.getMembers)
+router.post('/uploadImages', store.any(), jwtauth, image.uploadImages)
 
-router.post('/uploadImages', store.any(), jwtauth, images.uploadImages)
+router.post('/getImages', jwtauth, image.getImages)
 
-router.post('/getImages', jwtauth, images.getImages)
+router.post('/deleteImages', jwtauth, image.deleteImages)
 
-router.post('/deleteImages', jwtauth, images.deleteImages)
+//router.post('/uploadWishes', store.any(), wish.uploadWishes)
 
-router.post('/uploadWishes', store.any(), wishes.uploadWishes)
+//router.post('/getWishes', wish.getWishes)
 
-router.post('/getWishes', wishes.getWishes)
+//router.post('/deleteWishes', wish.deleteWishes)
 
-router.post('/deleteWishes', wishes.deleteWishes)
+router.post('/getMembers', jwtauth, member.getMembers)
 
-router.get('/reset', member.reset)
+router.get('/reset', member.resetAllMembers)
 
 module.exports = router
