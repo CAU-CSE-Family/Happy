@@ -5,6 +5,7 @@ const member = require('../controller/member')
 const images = require('../controller/images')
 const wishes = require('../controller/wishes')
 const store  = require('../config/multer')
+const jwtauth = require('../middlewares/jwtauth').checkToken
 
 router.post('/getSmsCode', sign.getSmsCode)
 
@@ -12,11 +13,11 @@ router.post('/signUp', sign.signUp)
 
 router.post('/signIn', sign.signIn)
 
-router.get('/family', family.createFamily)
+router.get('/family', jwtauth, family.createFamily)
 
-router.post('/joinFamily', family.joinFamily)
+router.post('/joinFamily', jwtauth, family.joinFamily)
 
-router.post('/leaveFamily', family.leaveFamily)
+router.post('/leaveFamily', jwtauth, family.leaveFamily)
 
 router.post('/getMembers', member.getMembers)
 

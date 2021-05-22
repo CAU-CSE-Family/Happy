@@ -1,5 +1,4 @@
-const family = require('../models/family')
-const User     = require('../models/user')
+const User = require('../models/user')
 
 exports.getMembers = async function (req, res){
   console.log("getMembers:\n", req.body)
@@ -55,18 +54,33 @@ exports.getMembers = async function (req, res){
   }
 }
 
-exports.reset = async function (req, res){
-  console.log("Reset all users data")
-
-  var result = true
-  var msg = ""
+exports.getMember = async function (userId) {
   try {
-    const user = await User.deleteMany({})
-    msg = "Successfully delete all users data"
+    const user = await User.findOne({ id: userId })
+    if (!user) {
+      return null
+    }
+    else {
+      return user
+    }
   } catch (err) {
     console.log(err)
-    result = false
-    msg = "Error occured in DB"
+    return null
   }
-  res.json({ result: result, message: msg })
+}
+
+exports.resetAllMembers = async function (req, res){
+  console.log("Reset all users data")
+
+  try {
+    const response = await User.deleteMany({})
+    if (response.ok != 1) {
+      res.status(400).json({ message: "Error occured in DB" })
+    } else {
+      res.status(200).json({ message: "Successfully delete all users data" })
+    }
+  } catch (err) {
+    console.log(err)
+    res.status(400).json({ message: "Error occured in DB" })
+  }
 }

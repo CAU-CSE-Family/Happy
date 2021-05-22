@@ -1,14 +1,13 @@
-const timer     = require('../public/timer.js')
-const rand      = require('../public/rand.js')
+const timer     = require('../modules/timer')
+const rand      = require('../modules/rand')
+const jwt       = require('../modules/jwt')
 const User      = require('../models/user')
 const axios     = require('axios')
 const cryptoJs  = require('crypto-js')
 const cache     = require('memory-cache')
-const jwt       = require('jsonwebtoken')
 
 // Create google oauth client to verify token
 const { OAuth2Client } = require('google-auth-library')
-const family = require('../models/family.js')
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID
 )
@@ -45,8 +44,6 @@ exports.getSmsCode = async function (req, res) {
   cache.put(phoneNumber, authNumber, vaildTime)
   timer.countdown(Number(vaildTime))
 
-  var msg = "Successfully send authentication message"
-
   try {
     const date = Date.now().toString()
     const uri = `${process.env.SENS_SERVICEID}`
@@ -75,12 +72,9 @@ exports.getSmsCode = async function (req, res) {
     console.log('Response: ', response.data)
   } catch(err) {
     console.log(err)
-    msg = "Error on server sending authentication message"
-    res.status(405).send(msg)
+    res.status(405).json({ message: "Error on server sending authentication message"})
   }
-
-  res.status(200)
-  res.send(msg)
+  res.status(200).json()
 }
 
 exports.signUp = async function (req, res) {
@@ -92,67 +86,52 @@ exports.signUp = async function (req, res) {
     audience: process.env.GOOGLE_CLIENT_ID
   })
   const payload = ticket.getPayload()
-  const googleId = payload['sub']
+
   const type = req.body.oAuthData["type"]
+  const googleId = payload["sub"]
   const sessionKey = rand.randomString(32)
-  const authNumber = req.body.code
   const phoneNumber = cache.keys()[0]
+  const authNumber = req.body.code
 
   const clientUser = {
     id: type + googleId,
     session: sessionKey,
     name: req.body.oAuthData["name"],
-    phone: phoneNumber || req.body["phone"],
+    phone: phoneNumber,
     photo_url: req.body.oAuthData["photoUrl"],
     id_family: null
   }
 
-  var result = false
-  var msg = ""
-  try {
-    var is_duplicated = false
-    const user = await User.findOne({ id: type + googleId })
-    if (user) { is_duplicated = true }
-  } catch (err) {
-    console.log(err)
-    msg = "Error occured in DB"
-    res.status(400).send(msg)
-  } finally {
-    if (!phoneNumber) {
-      msg = "Cache data deleted: authentication timed out"
-    }
-    else if (!cache.get(phoneNumber)) {
-      msg = "Authentication number is not entered"
-    }
-    else if (is_duplicated) {
-      msg = "This user ID is already in DB"
-    }
-    else if (cache.get(phoneNumber) == authNumber) {
-      result = true
-      msg = "Sucessfully verified"
-    }
-    else {
-      msg = "Wrong request: Not verified access"
-    }
+  let result = false
+  if (!phoneNumber) {
+    res.status(400).json({ message: "Authentication timed out" })
+  }
+  else if (!cache.get(phoneNumber)) {
+    res.status(400).json({ message: "Authentication number is not entered" })
+  }
+  else if (cache.get(phoneNumber) == authNumber) {
+    result = true
+  }
+  else {
+    res.status(400).json({ message: "Wrong request: Not verified access" })
   }
 
   if (result) {
     try {
-      const userToken = jwt.sign({ id: clientUser.id }, `${process.env.SECRET_KET}`)
-      const userDataResponse = {
-        token: userToken,
+      const jwtToken = await jwt.sign(clientUser)
+      const userData = {
+        token: jwtToken.token,
         userId: clientUser.id,
         familyId: clientUser.id_family
       }
       new User(clientUser).save()
-      res.status(200)
-      res.json(userDataResponse)
+      res.status(200).json(userData)
     } catch (err) {
-      res.status(400).send(err)
+      res.status(400).json({ message: err })
     }
   }
   else {
-    res.status(400).send(msg)
+    res.status(400).json({ message: "Sucessfully verified" })
   }
 }
 
@@ -165,26 +144,29 @@ exports.signIn = async function (req, res){
     audience: process.env.GOOGLE_CLIENT_ID
   })
   const payload = ticket.getPayload()
-  const googleId = payload['sub']
+
   const type = req.body["type"]
+  const googleId = payload["sub"]
+  
+  const clientUser = {
+    id: type + googleId,
+  }
 
   try {
-    const user = await User.findOne({ id: type + googleId })
+    const user = await User.findOne({ id: clientUser.id })
     if (!user) {
-      res.status(401).send("User\'s ID is not in DB")
-    }
-    else {
-      const userToken = jwt.sign({ id: user["id"] }, `${process.env.SECRET_KET}`)
-      const userDataResponse = {
-        token: userToken,
-        userId: user["id"],
-        familyId: user["id_family"]
+      res.status(401).json("User\'s ID is not in DB")
+    } else {
+      const jwtToken = await jwt.sign(clientUser)
+      const userData = {
+        token: jwtToken.token,
+        userId: clientUser.id,
+        familyId: clientUser.id_family
       }
-      res.status(200)
-      res.json(userDataResponse)
+      res.status(200).json(userData)
     }
   } catch (err) {
-    res.status(401).send(err)
+    res.status(401).json({ message: err })
   }
 }
 
