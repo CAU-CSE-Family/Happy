@@ -21,11 +21,11 @@ router.post('/leaveFamily', jwtauth, family.leaveFamily)
 
 router.post('/getMembers', member.getMembers)
 
-router.post('/uploadImages', store.any(), images.uploadImages)
+router.post('/uploadImages', store.any(), jwtauth, images.uploadImages)
 
-router.post('/getImages', images.getImages)
+router.post('/getImages', jwtauth, images.getImages)
 
-router.post('/deleteImages', images.deleteImages)
+router.post('/deleteImages', jwtauth, images.deleteImages)
 
 router.post('/uploadWishes', store.any(), wishes.uploadWishes)
 
