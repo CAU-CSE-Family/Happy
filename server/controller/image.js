@@ -38,7 +38,7 @@ exports.uploadImages = async function (req, res, next){
     }
   
     try {
-      const savedImg = await new Image(newImg).save()
+      const savedImg = new Image(newImg).save()
       if (savedImg) {
         return { msg: `${files[index].originalname} Uploaded Successfully`, url: files[index].path }
       } else {

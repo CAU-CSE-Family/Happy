@@ -154,6 +154,7 @@ exports.signIn = async function (req, res){
 
   try {
     const user = await User.findOne({ id: clientUser.id })
+    console.log(user)
     if (!user) {
       res.status(401).json("User\'s ID is not in DB")
     } else {
