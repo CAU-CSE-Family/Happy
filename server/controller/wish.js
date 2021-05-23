@@ -8,7 +8,9 @@ exports.uploadWishes = async function (req, res){
   try {
     const googleId = req.id
     const user = await member.getMember(googleId)
-
+    if (!user)
+      return res.status(400).json({ message: "Invalid user ID" })
+    
     const newWish = {
       id: new mongoose.Types.ObjectId(),
       id_user: googleId,
