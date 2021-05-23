@@ -25,9 +25,8 @@ exports.createFamily = async function (req, res){
     }
 
     const response = await new Family(clientFamily).save()
-    if (!response.id) {
+    if (!response.id)
       return res.status(401).json({ msg: "Error occured in DB" })
-    } 
     
     const response2 = await User.findOneAndUpdate(
       { id: googleId },

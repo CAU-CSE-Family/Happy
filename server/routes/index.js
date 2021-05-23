@@ -19,17 +19,17 @@ router.post('/family', jwtauth, family.joinFamily)
 
 router.delete('/family', jwtauth, family.leaveFamily)
 
-router.post('/upload/photo', store.any(), jwtauth, photo.upload)
+router.post('/upload/photo', store.any(), jwtauth, photo.uploadPhotos)
 
 //router.get('/getImages', jwtauth, image.getImages)
 
-//router.post('/deleteImages', jwtauth, image.deleteImages)
+router.delete('/delete/photo', jwtauth, photo.deletePhotos)
 
-//router.post('/uploadWishes', store.any(), wish.uploadWishes)
+//router.post('/upload/wish', store.any(), wish.uploadWishes)
 
 //router.post('/getWishes', wish.getWishes)
 
-//router.post('/deleteWishes', wish.deleteWishes)
+//router.post('/delete/wish', wish.deleteWishes)
 
 router.get('/sync/user', jwtauth, member.getMembers)
 

@@ -1,59 +1,33 @@
 const Wish = require('../models/wish')
 const User = require('../models/user')
 const fs = require('fs')
+const mongoose = require('mongoose')
 
 exports.uploadWishes = async function (req, res, next){
+  console.log("getImages: " + req.id)
 
-  const googleId = req.body["id"]
-  const sessionKey = req.body["session"]
-  const familyId = req.body["id_family"]
-  const files = req.files
+  try {
+    const googleId = req.id
+    const user = await member.getMember(googleId)
 
-  User.findOne({ id: googleId, session: sessionKey, id_family: familyId }).then(existingUser => {
-    if (!existingUser) {
-      res.json({result: false, message: "No matching user&familyID&session in the DB."})
-    }
-  })
-
-  if (!files) {
-    const err = new Error("Please choose files.")
-    error.httpStatusCode = 400
-    return next(err)
-  }
-
-  let wishArray = files.map((file) => {
-    let wish = fs.createReadStream(file.path)
-    return wish
-  })
-
-  const result = wishArray.map((src, index) => {
-    const final_wish = {
-      filename: files[index].originalname,
+    const newWish = {
+      id: new mongoose.Types.ObjectId(),
       id_user: googleId,
-      id_family: familyId,
-      contentType: files[index].mimetype,
-      content: src
+      id_family: user.id_family,
+      title: req.body.title,
+      content: req.body.content,
+      time_opened: Date.now()
     }
 
-    const newWish = new Wish(final_wish)
-    return newWish.save().then(() => {
-      return { msg: `${files[index].originalname} Uploaded Successfully.`}
-    }).catch(err => {
-      if (err) {
-        if (err.name === 'MongoError' && err.code === 11000) {
-          return Promise.reject({ err: `Duplicate ${files[index].originalname}. File already exists.`})
-        }
-        return Promise.reject({ err: err.message || `Cannot Upload ${files[index].originalname} file missing.`})
-      }
-    })
-  })
-
-  Promise.all(result).then(msg => {
-    res.json({result: true, message: msg})
-  }).catch(err => {
+    const response = new Wish(newWish).save()
+    if (!response.id)
+      return res.status(400).json({ message: "Error occured in DB" })
+    else
+      return res.status(200).json(newWish)
+  } catch (err) {
     console.log(err)
-    res.json({result: false, message: err})
-  })
+    return res.status(400).json({ message: err })
+  }
 }
 
 exports.getWishes = async function (req, res){

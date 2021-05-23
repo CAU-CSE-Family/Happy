@@ -5,7 +5,7 @@ const Tag    = require('../models/tag')
 const fs     = require('fs')
 const mongoose = require('mongoose')
 
-exports.upload = async function (req, res, next){
+exports.uploadPhotos = async function (req, res, next){
   console.log("upload: " + req.id)
   
   const files    = req.files
@@ -13,7 +13,7 @@ exports.upload = async function (req, res, next){
   const googleId = req.id
   const user     = await member.getMember(googleId)
   const familyId = user.id_family
-  const body     = JSON.parse(JSON.stringify(req.body))
+  const body     = JSON.parse(JSON.stringify(req.body).replace("\'", ""))
   console.log(body)
   let eventId    = ""
   let event      = null
@@ -69,7 +69,6 @@ exports.upload = async function (req, res, next){
       id_event: eventId,
       timestamp: Date.now()
     }
-    console.log(src)
     try {
       const response = new Photo(newPhoto).save()
       if (!response)
@@ -120,38 +119,37 @@ exports.getImages = async function (req, res, next){
   })
 }
 
-exports.deleteImages = async function (req, res, next){
-  console.log("deleteImages: " + req.id)
+exports.deletePhotos = async function (req, res){
+  console.log("deletePhotos: " + req.id)
 
-  const urls = req.body.url
+  const urls = req.body.urls
   console.log("file urls:\n", urls)
 
   const googleId = req.id
   const user = await member.getMember(googleId)
-  const familyId = user.id_family
 
-  if (!googleId) {
-    res.status(400).json({ message: "Invalid user ID" })
-  }
+  if (!googleId)
+    return res.status(400).json({ message: "Invalid user ID" })
 
-  if (!urls) {
-    res.status(400).json({ message: "Please choose the files" })
-  }
+  if (!urls)
+    return res.status(400).json({ message: "Please choose the files" })
 
-  urls.forEach(async (src) => {
+  urls.forEach(async (url) => {
     try {
-      const response = await Image.deleteOne({ url: src, id_family: familyId })
-      if (response.ok != 1) {
-        res.status(400).json({ message: "Error occured in DB to delete images" })
-      } else {
-        fs.unlinkSync(src, (err) => {
-          if (err) { console.log("Failed to delete local image:", err) }
-          else { console.log("Successfully deleted local image") }
+      const response = await Image.deleteOne({ url: url, id_family: user.id_family })
+      if (response.ok != 1)
+        return res.status(400).json({ message: "Error occured in DB to delete images" })
+      else {
+        fs.unlinkSync(url, (err) => {
+          if (err)
+            console.log("Failed to delete local image:", err)
+          else
+            console.log("Successfully deleted local image")
         })
-        res.status(200).json({ message: "Deleted successfully" })
+        return res.status(200).json({ message: "Deleted successfully" })
       }
     } catch (err) {
-      res.status(400).json({ message: err })
+      return res.status(400).json({ message: err })
     }
   })
 }

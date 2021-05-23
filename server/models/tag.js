@@ -9,7 +9,7 @@ const TagSchema = new mongoose.Schema({
   id_user: [String],
   id_event: {
     type: String,
-    require: true
+    required: true
   }
 })
 
