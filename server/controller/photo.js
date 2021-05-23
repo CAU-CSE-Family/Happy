@@ -9,10 +9,12 @@ exports.upload = async function (req, res, next){
   console.log("upload: " + req.id)
   
   const files    = req.files
+  console.log(files)
   const googleId = req.id
   const user     = await member.getMember(googleId)
   const familyId = user.id_family
-  const body     = JSON.parse(req.body.body)
+  const body     = JSON.parse(JSON.stringify(req.body))
+  console.log(body)
   let eventId    = ""
   let event      = null
 

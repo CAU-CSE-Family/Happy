@@ -31,7 +31,7 @@ router.post('/upload/photo', store.any(), jwtauth, photo.upload)
 
 //router.post('/deleteWishes', wish.deleteWishes)
 
-router.get('/syncUser', jwtauth, member.getMembers)
+router.get('/sync/user', jwtauth, member.getMembers)
 
 router.get('/reset', member.resetAllMembers)
 
