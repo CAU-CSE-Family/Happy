@@ -20,7 +20,7 @@ exports.getMembers = async function (req, res){
 
   try {
     const googleId = req.id
-    const user = await module.exports.getMember(googleId)
+    const user = await User.findOne({ id: googleId })
     if (!user) {
       res.status(400).json({ message: "Invalid user ID" })
     }
@@ -37,7 +37,7 @@ exports.getMembers = async function (req, res){
       }
       members.push(MemberData)
     })
-    res.status(200).json({ family: familyId, members: members })
+    res.status(200).json({ users: members })
   } catch (err) {
     console.log(err)
     res.status(400).json({ message: "Error occured in DB" })
