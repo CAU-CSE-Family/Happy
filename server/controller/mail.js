@@ -18,7 +18,7 @@ exports.writeMail = async function (req, res){
     }
 
     const response = new Mail(newMail).save()
-    if (!response.id)
+    if (!response)
       return res.status(400).json({ message: "Error occured in DB" })
     else
       return res.status(200).json()
