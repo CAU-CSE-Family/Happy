@@ -54,8 +54,8 @@ exports.joinFamily = async function (req, res){
       return res.status(400).json({ message: "Invalid user ID" })
     const sessionKey = user.session
     const familyId = user.id_family
-    const reqFamilyId = req.body.id_family
-
+    const reqFamilyId = req.body.familyId
+    
     const response = await User.findOneAndUpdate(
       { id: googleId, session: sessionKey },
       { $set : { id_family: reqFamilyId } }

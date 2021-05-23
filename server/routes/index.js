@@ -15,9 +15,9 @@ router.post('/signIn', sign.signIn)
 
 router.get('/family', jwtauth, family.createFamily)
 
-router.post('/joinFamily', jwtauth, family.joinFamily)
+router.post('/family', jwtauth, family.joinFamily)
 
-router.get('/leaveFamily', jwtauth, family.leaveFamily)
+router.delete('/family', jwtauth, family.leaveFamily)
 
 router.post('/uploadImages', store.any(), jwtauth, image.uploadImages)
 
