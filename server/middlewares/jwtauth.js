@@ -6,9 +6,9 @@ const TOKEN_INVALID = -2;
 const jwtauth = {
   checkToken: async (req, res, next) => {
     console.log("Body: \n", req.body)
-    var token = String(req.headers.authorization)
-    token = token.split(" ")[1]
-    token = token.replace("\"", "")
+    console.log("Headers: \n", req.headers)
+
+    const token = req.headers.authorization.split("Bearer ")[1]
     console.log("Token: " + token)
 
     if (!token)

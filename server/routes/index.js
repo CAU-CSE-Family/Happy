@@ -17,7 +17,7 @@ router.get('/family', jwtauth, family.createFamily)
 
 router.post('/joinFamily', jwtauth, family.joinFamily)
 
-router.post('/leaveFamily', jwtauth, family.leaveFamily)
+router.get('/leaveFamily', jwtauth, family.leaveFamily)
 
 router.post('/uploadImages', store.any(), jwtauth, image.uploadImages)
 
