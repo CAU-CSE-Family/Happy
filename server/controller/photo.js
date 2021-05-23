@@ -52,7 +52,7 @@ exports.upload = async function (req, res, next){
 
     const newTag = {
       id: new mongoose.Types.ObjectId(),
-      id_user: [req.body.tags],
+      id_user: req.body.userIds,
       id_event: eventId
     }
     try {
