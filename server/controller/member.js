@@ -31,11 +31,9 @@ exports.getMembers = async function (req, res){
     users.forEach(member => {
       const MemberData = {
         "id": member.id,
-        "profileData": ProfileData = {
-          "name": member.name,
-          "phone": member.phone,
-          "photoUrl": member.photo_url
-        }
+        "name": member.name,
+        "phone": member.phone,
+        "photoUrl": member.photo_url
       }
       members.push(MemberData)
     })
