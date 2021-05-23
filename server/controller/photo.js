@@ -41,7 +41,7 @@ exports.uploadPhotos = async function (req, res, next){
         event   = newEvent
         const newTag = {
           id: new mongoose.Types.ObjectId(),
-          id_user: String(body.userIds).replace("\"", ""),
+          id_user: body.userIds,
           id_event: response.id
         }
         const response2 = await new Tag(newTag).save()

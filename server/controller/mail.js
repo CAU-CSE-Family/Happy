@@ -3,7 +3,7 @@ const Mail     = require('../models/mail')
 const mongoose = require('mongoose')
 
 exports.writeMail = async function (req, res){
-  console.log("getImages: " + req.id)
+  console.log("writeMail: " + req.id)
 
   try {
     const user = await member.getMember(req.id)

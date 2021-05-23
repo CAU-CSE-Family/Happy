@@ -2,8 +2,8 @@ const member   = require('./member')
 const Wish     = require('../models/wish')
 const mongoose = require('mongoose')
 
-exports.uploadWishes = async function (req, res){
-  console.log("getImages: " + req.id)
+exports.writeWishes = async function (req, res){
+  console.log("writeWishes: " + req.id)
 
   try {
     const googleId = req.id

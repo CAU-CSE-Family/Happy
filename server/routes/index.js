@@ -4,6 +4,7 @@ const family   = require('../controller/family')
 const member   = require('../controller/member')
 const photo    = require('../controller/photo')
 const wish     = require('../controller/wish')
+const mail     = require('../controller/mail')
 const store    = require('../middlewares/multer')
 const jwtauth  = require('../middlewares/jwtauth').checkToken
 
@@ -25,11 +26,13 @@ router.post('/upload/photo', store.any(), jwtauth, photo.uploadPhotos)
 
 router.delete('/delete/photo', jwtauth, photo.deletePhotos)
 
-router.post('/upload/wish', store.any(), wish.uploadWishes)
+router.post('/wish', store.any(), wish.writeWishes)
 
 //router.post('/getWishes', wish.getWishes)
 
 //router.post('/delete/wish', wish.deleteWishes)
+
+router.post('/mail', store.any(), mail.writeMail)
 
 router.get('/sync/user', jwtauth, member.getMembers)
 
