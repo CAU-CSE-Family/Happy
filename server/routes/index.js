@@ -26,13 +26,13 @@ router.post('/upload/photo', store.any(), jwtauth, photo.uploadPhotos)
 
 router.delete('/delete/photo', jwtauth, photo.deletePhotos)
 
-router.post('/wish', store.any(), wish.writeWishes)
+router.post('/wish', jwtauth, wish.writeWishes)
 
 //router.post('/getWishes', wish.getWishes)
 
 //router.post('/delete/wish', wish.deleteWishes)
 
-router.post('/mail', store.any(), mail.writeMail)
+router.post('/mail', jwtauth, mail.writeMail)
 
 router.get('/sync/user', jwtauth, member.getMembers)
 
