@@ -1,9 +1,8 @@
-const Wish = require('../models/wish')
-const User = require('../models/user')
-const fs = require('fs')
+const member   = require('./member')
+const Wish     = require('../models/wish')
 const mongoose = require('mongoose')
 
-exports.uploadWishes = async function (req, res, next){
+exports.uploadWishes = async function (req, res){
   console.log("getImages: " + req.id)
 
   try {
@@ -31,69 +30,9 @@ exports.uploadWishes = async function (req, res, next){
 }
 
 exports.getWishes = async function (req, res){
-  const googleId = req.body["id"]
-  const sessionKey = req.body["session"]
-  const familyId = req.body["id_family"]
-
-  User.findOne({ id: googleId, session: sessionKey, id_family: familyId }).then(existingUser => {
-    if (!existingUser) {
-      res.json({result: false, message: "No matching user&familyID&session in the DB."})
-    }
-    else {
-      Wish.find({ id_family: existingUser["id_family"] }, (err, items) => {
-        if (err) {
-          console.log(err)
-          res.json({result: false, message: err})
-        }
-        else {
-          res.json({result: true, message: "Successfully get wishes.", wishes: items})
-        }
-      })
-    }
-  })
+  
 }
 
-exports.deleteWishes = async function (req, res, next){
-  const googleId = req.body["id"]
-  const sessionKey = req.body["session"]
-  const familyId = req.body["id_family"]
-  const files = req.files
-
-  User.findOne({ id: googleId, session: sessionKey, id_family: familyId }).then(existingUser => {
-    if (!existingUser) {
-      res.json({result: false, message: "No matching user&familyID&session in the DB."})
-    }
-  })
-
-  if (!files) {
-    const err = new Error("Please choose files.")
-    error.httpStatusCode = 400
-    return next(err)
-  }
-
-  let wishArray = files.map((file) => {
-    let wish = fs.createReadStream(file.path)
-    return wish
-  })
-
-  const result = wishArray.map((src, index) => {
-    return Wish.deleteOne({ filename: files[index].originalname }).then(() => {
-      /*
-      fs.unlinkSync('../uploads/'+files[index].originalname, (err) => {
-        if (err) { console.log("Failed to delete local wishes:" + err) }
-        else { console.log("Successfully deleted local wishes.") }
-      })
-      */
-      return { msg: `${files[index].originalname} Deleted successfully.`}
-    }).catch(err => {
-      return Promise.reject({ err: err.message || `Cannot delete ${files[index].originalname} file missing.`})
-    })
-  })
+exports.deleteWishes = async function (req, res){
   
-  Promise.all(result).then(msg => {
-    res.json({result: true, message: msg})
-  }).catch(err => {
-    console.log(err)
-    res.json({result: false, message: err})
-  })
 }

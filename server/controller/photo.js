@@ -1,21 +1,22 @@
-const member = require('./member')
-const Photo  = require('../models/photo')
-const Event  = require('../models/event')
-const Tag    = require('../models/tag')
-const fs     = require('fs')
+const Photo    = require('../models/photo')
+const Event    = require('../models/event')
+const Tag      = require('../models/tag')
+const member   = require('./member')
 const mongoose = require('mongoose')
+const fs       = require('fs')
+
 
 exports.uploadPhotos = async function (req, res, next){
   console.log("upload: " + req.id)
   
   const files    = req.files
-  console.log(files)
   const googleId = req.id
   const user     = await member.getMember(googleId)
-  const familyId = user.id_family
   const body     = JSON.parse(JSON.stringify(req.body))
   let eventId    = ""
   let event      = null
+  console.log(files)
+  console.log(body)
 
   if (!googleId)
     return res.status(400).json({ message: "Invalid user ID" })
@@ -23,12 +24,12 @@ exports.uploadPhotos = async function (req, res, next){
   if (!files)
     return res.status(400).json({ message: "Please choose the files" })
 
-  if (String(body.isNewEvent).replace("\'", "")) {
+  if (body.isNewEvent) {
     try {
       const newEvent = {
         id: new mongoose.Types.ObjectId(),
-        id_family: familyId,
-        name: String(body.eventName).replace("\'", ""),
+        id_family: user.id_family,
+        name: String(body.eventName).replace("\"", ""),
         timestamp: Date.now()
       }
       console.log(newEvent)
@@ -36,9 +37,11 @@ exports.uploadPhotos = async function (req, res, next){
       if (!response)
         return res.status(400).json({ message: "Error occured in DB" })
       else {
+        eventId = response.id
+        event   = newEvent
         const newTag = {
           id: new mongoose.Types.ObjectId(),
-          id_user: String(body.userIds).replace("\'", ""),
+          id_user: String(body.userIds).replace("\"", ""),
           id_event: response.id
         }
         const response2 = await new Tag(newTag).save()
@@ -63,10 +66,8 @@ exports.uploadPhotos = async function (req, res, next){
   const uploaded = await photoArray.map((src, index) => {
     const newPhoto = {
       url: files[index].path,
-      contentType: files[index].mimetype,
-      id_user: googleId,
-      id_family: familyId,
-      id_event: eventId,
+      user_id: googleId,
+      event_id: eventId,
       timestamp: Date.now()
     }
     try {
@@ -94,13 +95,13 @@ exports.getImages = async function (req, res, next){
   console.log("getImages: " + req.id)
 
   const googleId = req.id
-  const user = await member.getMember(googleId)
+  const user     = await member.getMember(googleId)
   const familyId = user.id_family
+  const urls     = []
 
   if (!googleId)
     return res.status(400).json({ message: "Invalid user ID" })
   
-  const urls = []
   try {
     const images = await Image.find({ id_family: familyId })
     images.map((src) => { urls.push(src.url) })
@@ -122,11 +123,10 @@ exports.getImages = async function (req, res, next){
 exports.deletePhotos = async function (req, res){
   console.log("deletePhotos: " + req.id)
 
-  const urls = req.body.urls
-  console.log("file urls:\n", urls)
-
+  const urls     = req.body.urls
   const googleId = req.id
-  const user = await member.getMember(googleId)
+  const user     = await member.getMember(googleId)
+  console.log("file urls:\n", urls)
 
   if (!googleId)
     return res.status(400).json({ message: "Invalid user ID" })

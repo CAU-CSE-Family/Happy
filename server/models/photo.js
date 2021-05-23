@@ -6,10 +6,8 @@ const PhotoSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  contentType: String,
-  id_user: String,
-  id_family: String,
-  id_event: String,
+  user_id: String,
+  event_id: String,
   timestamp: {
     type: Date,
     default: Date.now()

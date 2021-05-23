@@ -19,7 +19,7 @@ router.post('/family', jwtauth, family.joinFamily)
 
 router.delete('/family', jwtauth, family.leaveFamily)
 
-router.post('/upload', store.any(), jwtauth, photo.uploadPhotos)
+router.post('/upload/photo', store.any(), jwtauth, photo.uploadPhotos)
 
 //router.get('/getImages', jwtauth, image.getImages)
 
