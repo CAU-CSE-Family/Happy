@@ -2,7 +2,7 @@ const router   = require('express').Router()
 const sign     = require('../controller/sign')
 const family   = require('../controller/family')
 const member   = require('../controller/member')
-const image    = require('../controller/image')
+const photo    = require('../controller/photo')
 const wish     = require('../controller/wish')
 const store    = require('../middlewares/multer')
 const jwtauth  = require('../middlewares/jwtauth').checkToken
@@ -19,11 +19,11 @@ router.post('/family', jwtauth, family.joinFamily)
 
 router.delete('/family', jwtauth, family.leaveFamily)
 
-router.post('/uploadImages', store.any(), jwtauth, image.uploadImages)
+router.post('/upload/photo', store.any(), jwtauth, photo.upload)
 
-router.get('/getImages', jwtauth, image.getImages)
+//router.get('/getImages', jwtauth, image.getImages)
 
-router.post('/deleteImages', jwtauth, image.deleteImages)
+//router.post('/deleteImages', jwtauth, image.deleteImages)
 
 //router.post('/uploadWishes', store.any(), wish.uploadWishes)
 

@@ -8,8 +8,8 @@ const FamilySchema = new mongoose.Schema({
   },
   user_list: [{
     id_user: {
-      type: String
-      
+      type: String,
+      unique: true
     }
   }]
 })

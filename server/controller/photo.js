@@ -1,16 +1,20 @@
 const member = require('./member')
-const Image  = require('../models/image')
+const Photo  = require('../models/photo')
+const Event  = require('../models/event')
+const Tag    = require('../models/tag')
 const fs     = require('fs')
 const stream = require('stream')
+const mongoose = require('mongoose')
 
-exports.uploadImages = async function (req, res, next){
-  console.log("uploadImages: " + req.id)
+exports.upload = async function (req, res, next){
+  console.log("upload: " + req.id)
   const files = req.files
-  console.log("uploading files:\n", files)
+  console.log("upload files:\n", files)
 
   const googleId = req.id
   const user = await member.getMember(googleId)
   const familyId = user.id_family
+  let eventId = ""
 
   if (!googleId) {
     const err = new Error ("Invalid user ID")
@@ -22,7 +26,7 @@ exports.uploadImages = async function (req, res, next){
     return next(err)
   }
 
-  const imgArray = await files.map((file) => {
+  const photoArray = await files.map((file) => {
     try {
       return fs.readFileSync(file.path).toString('base64')
     } catch (err) {
@@ -30,20 +34,51 @@ exports.uploadImages = async function (req, res, next){
     }
   })
 
-  const uploadImg = imgArray.map(async (src, index) => {
-    const newImg = {
+  if (req.body.isNewEvent) {
+    const newEvent = {
+      id: new mongoose.Types.ObjectId(),
+      id_family: familyId,
+      name: req.body.eventName,
+      timestamp: Date.now()
+    }
+    try {
+      const event = await new Event.save(newEvent)
+      if (!event)
+        return Promise.reject({ msg: "Error occured in DB" })
+      eventId = event.id
+    } catch (err){
+      return Promise.reject({ err: err.message })
+    }
+
+    const newTag = {
+      id: new mongoose.Types.ObjectId(),
+      id_user: [req.body.tags],
+      id_event: eventId
+    }
+    try {
+      const tag = await new Tag.save(newTag)
+      if (!tag)
+        return Promise.reject({ msg: "Error occured in DB" })
+    } catch (err){
+      return Promise.reject({ err: err.message })
+    }
+  }
+  
+  const uploaded = photoArray.map(async (src, index) => {
+    const newPhoto = {
       url: files[index].path,
+      contentType: files[index].mimetype,
       id_user: googleId,
       id_family: familyId,
-      contentType: files[index].mimetype,
+      id_event: eventId,
+      timestamp: Date.now()
     }
-  
     try {
-      const response = await new Image(newImg).save()
-      if (response)
-        return { msg: `${files[index].originalname} Uploaded Successfully`, url: files[index].path }
-      else
-        throw new Error("Cannot save image")
+      const response = await new Photo(newPhoto).save()
+        if (response)
+          return { msg: `${files[index].originalname} Uploaded Successfully`, url: files[index].path }
+        else
+          throw new Error("Cannot save image")
     } catch (err) {
       console.log(err)
       return Promise.reject({ err: err.message || `Cannot Upload ${files[index].originalname} file`})
@@ -51,7 +86,7 @@ exports.uploadImages = async function (req, res, next){
   })
 
   try {
-    const msg = await Promise.all(uploadImg)
+    const msg = await Promise.all(uploaded)
     res.status(200).json({ message: msg })
   } catch (err) {
     console.log(err)

@@ -55,7 +55,7 @@ exports.joinFamily = async function (req, res){
     const sessionKey = user.session
     const familyId = user.id_family
     const reqFamilyId = req.body.familyId
-    
+
     const response = await User.findOneAndUpdate(
       { id: googleId, session: sessionKey },
       { $set : { id_family: reqFamilyId } }
@@ -75,7 +75,7 @@ exports.joinFamily = async function (req, res){
       return res.status(400).json({ message: "Invalid family ID" })
     }
 
-    res.status(200).json({ family: reqFamilyId })
+    res.status(200).json({ familyId: reqFamilyId })
   } catch (err) {
     console.log(err)
     res.status(400).json({ message: "Error occured in DB" })
@@ -83,7 +83,7 @@ exports.joinFamily = async function (req, res){
 }
 
 exports.leaveFamily = async function (req, res){
-  console.log("Leave Family:" + req.id)
+  console.log("Leave Family: " + req.id)
   try {
     const googleId = req.id
     const user = await member.getMember(googleId)
