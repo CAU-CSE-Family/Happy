@@ -13,8 +13,7 @@ exports.uploadPhotos = async function (req, res, next){
   const googleId = req.id
   const user     = await member.getMember(googleId)
   const familyId = user.id_family
-  const body     = JSON.parse(JSON.stringify(req.body).replace("\'", ""))
-  console.log(body)
+  const body     = JSON.parse(JSON.stringify(req.body))
   let eventId    = ""
   let event      = null
 
@@ -24,21 +23,22 @@ exports.uploadPhotos = async function (req, res, next){
   if (!files)
     return res.status(400).json({ message: "Please choose the files" })
 
-  if (body.isNewEvent) {
+  if (String(body.isNewEvent).replace("\'", "")) {
     try {
       const newEvent = {
         id: new mongoose.Types.ObjectId(),
         id_family: familyId,
-        name: body.eventName,
+        name: String(body.eventName).replace("\'", ""),
         timestamp: Date.now()
       }
+      console.log(newEvent)
       const response = await new Event(newEvent).save()
       if (!response)
         return res.status(400).json({ message: "Error occured in DB" })
       else {
         const newTag = {
           id: new mongoose.Types.ObjectId(),
-          id_user: body.userIds,
+          id_user: String(body.userIds).replace("\'", ""),
           id_event: response.id
         }
         const response2 = await new Tag(newTag).save()

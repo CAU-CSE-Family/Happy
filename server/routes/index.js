@@ -19,13 +19,13 @@ router.post('/family', jwtauth, family.joinFamily)
 
 router.delete('/family', jwtauth, family.leaveFamily)
 
-router.post('/upload/photo', store.any(), jwtauth, photo.uploadPhotos)
+router.post('/upload', store.any(), jwtauth, photo.uploadPhotos)
 
 //router.get('/getImages', jwtauth, image.getImages)
 
 router.delete('/delete/photo', jwtauth, photo.deletePhotos)
 
-//router.post('/upload/wish', store.any(), wish.uploadWishes)
+router.post('/upload/wish', store.any(), wish.uploadWishes)
 
 //router.post('/getWishes', wish.getWishes)
 
