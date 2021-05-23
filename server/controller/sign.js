@@ -89,13 +89,11 @@ exports.signUp = async function (req, res) {
 
   const type = req.body.oAuthData["type"]
   const googleId = payload["sub"]
-  const sessionKey = rand.randomString(32)
   const phoneNumber = cache.keys()[0]
   const authNumber = req.body.code
 
   const clientUser = {
     id: type + googleId,
-    session: sessionKey,
     name: req.body.oAuthData["name"],
     phone: phoneNumber,
     photo_url: req.body.oAuthData["photoUrl"],
@@ -103,18 +101,14 @@ exports.signUp = async function (req, res) {
   }
 
   let result = false
-  if (!phoneNumber) {
+  if (!phoneNumber)
     res.status(400).json({ message: "Authentication timed out" })
-  }
-  else if (!cache.get(phoneNumber)) {
+  else if (!cache.get(phoneNumber))
     res.status(400).json({ message: "Authentication number is not entered" })
-  }
-  else if (cache.get(phoneNumber) == authNumber) {
+  else if (cache.get(phoneNumber) == authNumber)
     result = true
-  }
-  else {
+  else
     res.status(400).json({ message: "Wrong request: Not verified access" })
-  }
 
   if (result) {
     try {
@@ -154,7 +148,6 @@ exports.signIn = async function (req, res){
 
   try {
     const user = await User.findOne({ id: clientUser.id })
-    console.log(user)
     if (!user) {
       res.status(401).json("User\'s ID is not in DB")
     } else {

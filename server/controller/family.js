@@ -26,7 +26,7 @@ exports.createFamily = async function (req, res){
 
     const response = await new Family(clientFamily).save()
     if (!response.id) {
-      return res.status(401).json({ msg: "Error in DB on creating family" })
+      return res.status(401).json({ msg: "Error occured in DB" })
     } 
     
     const response2 = await User.findOneAndUpdate(
@@ -35,8 +35,8 @@ exports.createFamily = async function (req, res){
     )
     if (!response2.id) {
       const response3 = await Family.deleteOne({ id: clientFamily.id })
-      console.log("User ID and session not vaild, delete family: ", response3)
-      return res.status(401).json({ msg: "User ID and session not vaild" })
+      console.log("Invalid user ID, delete family: ", response3)
+      return res.status(401).json({ msg: "Invalid user ID" })
     } 
     res.status(200).json({ familyId: familyId })
   } catch (err) {
@@ -52,12 +52,11 @@ exports.joinFamily = async function (req, res){
     const user = await member.getMember(googleId)
     if (!user)
       return res.status(400).json({ message: "Invalid user ID" })
-    const sessionKey = user.session
     const familyId = user.id_family
     const reqFamilyId = req.body.familyId
 
     const response = await User.findOneAndUpdate(
-      { id: googleId, session: sessionKey },
+      { id: googleId },
       { $set : { id_family: reqFamilyId } }
     )
     if (!response.id)
@@ -69,7 +68,7 @@ exports.joinFamily = async function (req, res){
     )
     if (!response2.id) {
       await User.findOneAndUpdate(
-        { id: googleId, session: sessionKey },
+        { id: googleId },
         { $set : { id_family: familyId } }
       )
       return res.status(400).json({ message: "Invalid family ID" })
@@ -89,7 +88,6 @@ exports.leaveFamily = async function (req, res){
     const user = await member.getMember(googleId)
     if (!user)
       return res.status(400).json({ message: "Invalid user ID" })
-    const sessionKey = user.session
     
     const response = await Family.findOneAndUpdate(
       { id: user.id_family },
@@ -100,7 +98,7 @@ exports.leaveFamily = async function (req, res){
       return res.status(400).json({ message: "Invalid family ID" })
 
     const response2 = await User.findOneAndUpdate(
-      { id: googleId, session: sessionKey },
+      { id: googleId },
       { $set : { id_family: null } }
     )
     if (!response2.id)
