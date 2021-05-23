@@ -1,6 +1,7 @@
 const member = require('./member')
 const Image  = require('../models/image')
 const fs     = require('fs')
+const stream = require('stream')
 
 exports.uploadImages = async function (req, res, next){
   console.log("uploadImages: " + req.id)
@@ -29,7 +30,7 @@ exports.uploadImages = async function (req, res, next){
     }
   })
 
-  const saveImgArray = await imgArray.map((src, index) => {
+  const uploadImg = imgArray.map(async (src, index) => {
     const newImg = {
       url: files[index].path,
       id_user: googleId,
@@ -38,12 +39,11 @@ exports.uploadImages = async function (req, res, next){
     }
   
     try {
-      const savedImg = new Image(newImg).save()
-      if (savedImg) {
+      const response = await new Image(newImg).save()
+      if (response)
         return { msg: `${files[index].originalname} Uploaded Successfully`, url: files[index].path }
-      } else {
-        throw new Error("CantSaveFile")
-      }
+      else
+        throw new Error("Cannot save image")
     } catch (err) {
       console.log(err)
       return Promise.reject({ err: err.message || `Cannot Upload ${files[index].originalname} file`})
@@ -51,7 +51,7 @@ exports.uploadImages = async function (req, res, next){
   })
 
   try {
-    const msg = await Promise.all(saveImgArray)
+    const msg = await Promise.all(uploadImg)
     res.status(200).json({ message: msg })
   } catch (err) {
     console.log(err)
@@ -59,29 +59,42 @@ exports.uploadImages = async function (req, res, next){
   }
 }
 
-exports.getImages = async function (req, res){
+exports.getImages = async function (req, res, next){
   console.log("getImages: " + req.id)
 
   const googleId = req.id
   const user = await member.getMember(googleId)
   const familyId = user.id_family
 
-  if (!googleId) {
-    res.status(400).json({ message: "Invalid user ID" })
-  }
+  if (!googleId)
+    return res.status(400).json({ message: "Invalid user ID" })
   
-  let urls = []
+  const urls = []
   try {
     const images = await Image.find({ id_family: familyId })
-    images.map((src) => {
-      urls.push(src.url)
-    })
-    res.status(200).json({ url: urls })
+    images.map((src) => { urls.push(src.url) })
   } 
   catch (err) {
     console.log(err)
     res.status(400).json({ message: err })
   }
+
+  urls.map((url) => {
+    try {
+      const img = fs.createReadStream(url)
+      const ps = new stream.PassThrough()
+      stream.pipeline(img, ps, (err) => {
+        if (err) {
+          console.log(err)
+          return res.status(400).json({ message: err })
+        }
+      })
+      ps.pipe(res)
+    } catch (err) {
+      console.log(err)
+      return res.status(400).json({ message: err })
+    }
+  })
 }
 
 exports.deleteImages = async function (req, res, next){

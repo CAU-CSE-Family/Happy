@@ -4,7 +4,7 @@ const family   = require('../controller/family')
 const member   = require('../controller/member')
 const image    = require('../controller/image')
 const wish     = require('../controller/wish')
-const store    = require('../config/multer')
+const store    = require('../middlewares/multer')
 const jwtauth  = require('../middlewares/jwtauth').checkToken
 
 router.post('/getSmsCode', sign.getSmsCode)
@@ -21,7 +21,7 @@ router.get('/leaveFamily', jwtauth, family.leaveFamily)
 
 router.post('/uploadImages', store.any(), jwtauth, image.uploadImages)
 
-router.post('/getImages', jwtauth, image.getImages)
+router.get('/getImages', jwtauth, image.getImages)
 
 router.post('/deleteImages', jwtauth, image.deleteImages)
 
