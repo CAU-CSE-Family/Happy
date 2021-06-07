@@ -1,155 +1,256 @@
-const Photo    = require('../models/photo')
-const Event    = require('../models/event')
-const Tag      = require('../models/tag')
-const member   = require('./member')
-const mongoose = require('mongoose')
-const fs       = require('fs')
+const fs        = require('fs')
+const camelKeys = require('camelcase-keys')
+const date      = require('../modules/date')
+const Photo     = require('../models/photo')
+const Event     = require('../models/event')
+const Tag       = require('../models/tag')
+const member    = require('./member')
 
-
-exports.uploadPhotos = async function (req, res, next){
+exports.uploadPhoto = async function (req, res, next){
   console.log("upload: " + req.id)
   
-  const files    = req.files
-  const googleId = req.id
-  const user     = await member.getMember(googleId)
-  const body     = JSON.parse(JSON.stringify(req.body))
-  let eventId    = ""
-  let event      = null
-  console.log(files)
-  console.log(body)
-
-  if (!googleId)
-    return res.status(400).json({ message: "Invalid user ID" })
-
-  if (!files)
-    return res.status(400).json({ message: "Please choose the files" })
-
-  if (body.isNewEvent) {
-    try {
-      const newEvent = {
-        id: new mongoose.Types.ObjectId(),
-        id_family: user.id_family,
-        name: String(body.eventName).replace("\"", ""),
-        timestamp: Date.now()
+  try {
+    const user     = await member.getMember(req.id)
+    if (!user)
+      return res.status(400).json({ message: "Invalid user ID" })
+    
+    const files    = req.files
+    if (!files)
+      return res.status(400).json({ message: "Please choose the files" })
+    
+    const body     = JSON.parse(JSON.stringify(req.body))
+    let userIds    = []
+    let eventId    = null
+    let event      = null
+    let tags       = null
+  
+    if (body.isNewEvent == "true" || body.isNewEvent == true) {
+      if (typeof body.userIds === 'string' || body.userIds instanceof String)
+        userIds.push(body.userIds.replace(/\"/gi, ""))
+      else {
+        userIds = await Promise.all(
+          body.userIds.map((src) => {
+            return src.replace(/\"/gi, "")
+          })
+        )
       }
-      console.log(newEvent)
+
+      const newEvent = {
+        family_id: user.family_id,
+        name: body.eventName.replace(/\"/gi, ""),
+        timestamp: date.now()
+      }
+      
       const response = await new Event(newEvent).save()
       if (!response)
         return res.status(400).json({ message: "Error occured in DB" })
       else {
         eventId = response.id
-        event   = newEvent
-        const newTag = {
-          id: new mongoose.Types.ObjectId(),
-          id_user: body.userIds,
-          id_event: response.id
-        }
-        const response2 = await new Tag(newTag).save()
-        if (!response2)
-          return res.status(400).json({ message: "Error occured in DB" })
+        event   = response.toObject()
+        delete event.family_id
+        delete event._id
+
+        const newTags = await Promise.all(
+          userIds.map(async (userId) => {
+            const newTag = {
+              user_id: userId,
+              event_id: eventId
+            }
+            const response2 = await new Tag(newTag).save()
+            if (!response2)
+              return []
+            else
+              return response2
+          })
+        )
+        tags = newTags.flat()
       }
-    } catch (err){
-      console.log(err)
-      return res.status(400).json({ message: err })
+    } else {
+      const existedEvent = await Event.findOne({ name: body.eventName.replace(/\"/gi, "") })
+      eventId = existedEvent.id
+      event = existedEvent.toObject()
+      delete event.family_id
+      delete event._id
+      const existedTags = await Tag.find({ event_id: existedEvent.id })
+      tags = existedTags.flat()
     }
-  }
-
-  const photoArray = await files.map((file) => {
-    try {
-      return fs.readFileSync(file.path)
-    } catch (err) {
-      console.log(err)
-      return res.status(400).json({ message: err })
-    }
-  })
   
-  const uploaded = await photoArray.map((src, index) => {
-    const newPhoto = {
-      url: files[index].path,
-      user_id: googleId,
-      event_id: eventId,
-      timestamp: Date.now()
-    }
-    try {
-      const response = new Photo(newPhoto).save()
-      if (!response)
-        throw new Error("Cannot upload image: " + `${files[index].originalname}`)
-      else 
-        return newPhoto
-    } catch (err) {
-      console.log(err)
-      return res.status(400).json({ message: err })
-    }
-  })
+    const photoArray = await files.map((file) => {
+      return fs.readFileSync(file.path)
+    })
+    
+    const photos = await Promise.all(
+      photoArray.map(async (src, index) => {
+        const newPhoto = {
+          url: `https://happyfamily.tk/${files[index].path}`,
+          user_id: req.id,
+          event_id: eventId,
+          timestamp: date.now()
+        }
+        const response = await new Photo(newPhoto).save()
+        if (!response)
+          return null
+        else 
+          return camelKeys(newPhoto)
+      })
+    )
 
-  try {
-    const photo = await Promise.all(uploaded)
-    res.status(200).json({ event: event, photos: photo })
+    const sendTags = await Promise.all(
+      tags.map(async (tag) => {
+        tag = tag.toObject()
+        delete tag._id
+        return camelKeys(tag)
+      })
+    )
+
+    res.status(200).json({ event: camelKeys(event), photos: photos, tags: sendTags })
+
   } catch (err) {
     console.log(err)
-    res.status(400).json({ message: err })
+    return res.status(400).json({ message: "Error occured in DB" })
   }
 }
 
-exports.getImages = async function (req, res, next){
-  console.log("getImages: " + req.id)
+exports.movePhoto = async function (req, res){
+  console.log("movePhoto: " + req.id)
 
-  const googleId = req.id
-  const user     = await member.getMember(googleId)
-  const familyId = user.id_family
-  const urls     = []
-
-  if (!googleId)
-    return res.status(400).json({ message: "Invalid user ID" })
-  
   try {
-    const images = await Image.find({ id_family: familyId })
-    images.map((src) => { urls.push(src.url) })
-  } 
-  catch (err) {
+    const user = await member.getMember(req.id)
+    if (!user)
+      return res.status(400).json({ message: "Invalid user ID" })
+    
+    const urls = req.body.photoUrls
+    if (!urls)
+      return res.status(400).json({ message: "Please enter the urls" })
+    
+    let photos = await Promise.all(
+      urls.map(async (url) => {
+        const photoDocument = await Photo.findOne({ url: url })
+        
+        const photo = await Photo.findOneAndUpdate(
+          { url: url },
+          { $set: { event_id: req.body.eventId } },
+          { new: true }
+        )
+        if (!photo)
+          return res.status(400).json({ message: "Invalid photo url" })
+        else {
+          const oldPhoto = await Photo.findOne({ event_id: photoDocument.event_id })
+          if (!oldPhoto)
+            await Event.deleteOne({ id: photoDocument.event_id })
+          photo.toObject()
+          delete photo._id
+          return camelKeys(photo)
+        }
+      })
+    )
+    photos = photos.flat()
+    
+    return res.status(200).json()
+  } catch (err) {
     console.log(err)
-    res.status(400).json({ message: err })
+    return res.status(400).json({ message: "Error occured in DB" })
   }
-
-  const photoArray = await urls.map((file) => {
-    try {
-      return fs.readFileSync(file.path).toString('base64')
-    } catch (err) {
-      return next(err)
-    }
-  })
 }
 
-exports.deletePhotos = async function (req, res){
+exports.syncPhoto = async function (req, res, next){
+  console.log("getPhotoUrls: " + req.id)
+
+  try {
+    const user = await member.getMember(req.id)
+    if (!user)
+      return res.status(400).json({ message: "Invalid user ID" })
+
+    const events = await Event.find({ family_id: user.family_id })
+    if (!events)
+      return res.status(400).json({ message: "Invalid user ID" })
+
+    let photos = await Promise.all(
+      events.map(async (event_) => {
+        return await Photo.find({ event_id: event_.id })
+      })
+    )
+    photos = photos.flat()
+
+    let tags = await Promise.all(
+      events.map(async (event_) => {
+        return await Tag.find({ event_id: event_.id })
+      })
+    )
+    tags = tags.flat()
+
+    const sendEvents = await Promise.all(
+      events.map(async (src) => {
+        src = src.toObject()
+        delete src._id
+        return camelKeys(src)
+      })
+    )
+
+    const sendPhotos = await Promise.all(
+      photos.map(async (src) => {
+        src = src.toObject()
+        delete src._id
+        return camelKeys(src)
+      })
+    )
+
+    const sendTags = await Promise.all(
+      tags.map(async (tag) => {
+        tag = tag.toObject()
+        delete tag._id
+        return camelKeys(tag)
+      })
+    )
+
+    return res.status(200).json({ events: sendEvents, tags: sendTags, photos: sendPhotos })
+  } catch (err) {
+    console.log(err)
+    return res.status(400).json({ message: "Error occured in DB" })
+  }
+}
+
+exports.deletePhoto = async function (req, res){
   console.log("deletePhotos: " + req.id)
 
-  const urls     = req.body.urls
-  const googleId = req.id
-  const user     = await member.getMember(googleId)
-  console.log("file urls:\n", urls)
+  try {
+    const user = await member.getMember(req.id)
+    if (!user)
+      return res.status(400).json({ message: "Invalid user ID" })
+    
+    const urls = req.body.photoUrls
+    if (!urls)
+      return res.status(400).json({ message: "Please enter the urls" })
 
-  if (!googleId)
-    return res.status(400).json({ message: "Invalid user ID" })
+    const photos = await Promise.all(
+      urls.map(async (url) => {
+        const photo = await Photo.findOne({url: url })
+        const eventId = photo.event_id
 
-  if (!urls)
-    return res.status(400).json({ message: "Please choose the files" })
-
-  urls.forEach(async (url) => {
-    try {
-      const response = await Image.deleteOne({ url: url, id_family: user.id_family })
-      if (response.ok != 1)
-        return res.status(400).json({ message: "Error occured in DB to delete images" })
-      else {
-        fs.unlinkSync(url, (err) => {
-          if (err)
-            console.log("Failed to delete local image:", err)
-          else
-            console.log("Successfully deleted local image")
-        })
-        return res.status(200).json({ message: "Deleted successfully" })
-      }
-    } catch (err) {
-      return res.status(400).json({ message: err })
-    }
-  })
+        const response = await Photo.deleteOne({ url: url })
+        if (response.ok != 1)
+          return null
+        else {
+          if (!await Photo.countDocuments({ event_id: eventId })) {
+            await Event.deleteOne({ id: eventId })
+            await Tag.deleteMany({ event_id: eventId })
+          }
+            
+          url = url.split("/")[4]
+          fs.unlinkSync("uploads/" + url, (err) => {
+            if (err)
+              console.log("Failed to delete local photo:", url)
+            else
+              console.log("Successfully deleted local photo")
+          })
+          return response
+        }
+      })
+    )
+    
+    return res.status(200).json()
+  } catch (err) {
+    console.log(err)
+    return res.status(400).json({ message: "Error occured in DB" })
+  }
 }

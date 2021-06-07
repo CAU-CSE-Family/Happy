@@ -8,11 +8,11 @@ const UserSchema = new mongoose.Schema({
     name: String,
     phone: String,
     photo_url: String,
-    id_family: {
+    family_id: {
         type: String,
         required: false,
         default: null
     }
-})
+}, { versionKey: false, autoIndex: false })
 
 module.exports = mongoose.model('User', UserSchema)

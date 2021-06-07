@@ -6,10 +6,11 @@ const TOKEN_INVALID = -2;
 const jwtauth = {
   checkToken: async (req, res, next) => {
     console.log("Body: \n", req.body)
-    console.log("Headers: \n", req.headers)
-
+    console.log("Authorization(jwt): \n", req.headers.authorization)
+    console.log("Fcm token: \n", req.headers["fcm-token"])
+    
     const token = req.headers.authorization.split("Bearer ")[1]
-    console.log("Token: " + token)
+    // console.log("JWT token: " + token)
 
     if (!token)
       return res.status(400).json("No token")

@@ -7,11 +7,11 @@ const FamilySchema = new mongoose.Schema({
     unique: true
   },
   user_list: [{
-    id_user: {
+    user_id: {
       type: String,
       unique: true
     }
   }]
-})
+}, { versionKey: false, autoIndex: false })
 
 module.exports = mongoose.model('Family', FamilySchema)

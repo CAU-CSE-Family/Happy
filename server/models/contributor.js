@@ -1,16 +1,21 @@
 const mongoose = require('mongoose')
+const auto     = require('../modules/auto')
 
 const ContributorSchema = new mongoose.Schema({
   id: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Number,
     required: true,
-    unique: true
+    default: 1
   },
-  id_user: [String],
-  id_wish: {
+  user_id: {
     type: String,
     required: true
+  },
+  wish_id: {
+    type: Number,
+    required: true
   }
-})
+}, { versionKey: false })
 
+auto(ContributorSchema, mongoose, 'contributor', 'id')
 module.exports = mongoose.model('Contibutor', ContributorSchema)

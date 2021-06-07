@@ -12,6 +12,9 @@ const connectDB  = require('./config/db')
 connectDB() 
 
 // Static folder
+const jwtauth = require('./middlewares/jwtauth').checkToken
+// const auth    = require('./middlewares/auth').checkId
+app.use('/uploads', jwtauth, express.static(path.join(__dirname, './uploads')))
 app.use(express.static(path.join(__dirname, 'public')))
 
 // Set global var
@@ -30,8 +33,8 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Routes
-const indexRouter = require('./routes/index')
-app.use('/', indexRouter)
+const router = require('./routes/index')
+app.use('/', router)
 
 // Running server on PORT
 app.set('PORT', process.env.PORT || 5000)

@@ -1,17 +1,20 @@
 const mongoose = require('mongoose')
+const auto     = require('../modules/auto')
+const date     = require('../modules/date')
 
 const EventSchema = new mongoose.Schema({
   id: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Number,
     required: true,
-    unique: true
+    default: 1
   },
-  id_family: String,
+  family_id: String,
   name: String,
   timestamp: { 
-    type: Date,
-    default: Date.now()
+    type: String,
+    default: date.now()
   }
-})
+}, { versionKey: false })
 
+auto(EventSchema, mongoose, 'event', 'id')
 module.exports = mongoose.model('Event', EventSchema)

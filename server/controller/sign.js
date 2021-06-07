@@ -1,10 +1,11 @@
+const axios     = require('axios')
+const cryptoJs  = require('crypto-js')
+const cache     = require('memory-cache')
 const timer     = require('../modules/timer')
 const rand      = require('../modules/rand')
 const jwt       = require('../modules/jwt')
 const User      = require('../models/user')
-const axios     = require('axios')
-const cryptoJs  = require('crypto-js')
-const cache     = require('memory-cache')
+const Fcm       = require('../models/fcm')
 
 // Create google oauth client to verify token
 const { OAuth2Client } = require('google-auth-library')
@@ -40,6 +41,7 @@ exports.getSmsCode = async function (req, res) {
 
   if (cache.get(phoneNumber)) {
     cache.del(phoneNumber)
+    console.log("Duplicate phone number: Cache deleted")
   }
   cache.put(phoneNumber, authNumber, vaildTime)
   timer.countdown(Number(vaildTime))
@@ -69,98 +71,119 @@ exports.getSmsCode = async function (req, res) {
         'x-ncp-apigw-signature-v2': makeSignature(encodeURIComponent(uri), date, accessKey, secretKey),
       }
     })
-    console.log('Response: ', response.data)
+    if (!response)
+      return res.status(400).json({ message: "Request sms code error" })
+    else
+      return res.status(200).json()
   } catch(err) {
     console.log(err)
-    res.status(405).json({ message: "Error on server sending authentication message"})
+    return res.status(405).json({ message: "Error on server sending authentication message"})
   }
-  res.status(200).json()
 }
 
 exports.signUp = async function (req, res) {
   console.log("signUp:\n", req.body)
 
-  const token = req.body.oAuthData["oAuthToken"]
-  const ticket = await client.verifyIdToken({
-    idToken: token,
-    audience: process.env.GOOGLE_CLIENT_ID
-  })
-  const payload = ticket.getPayload()
-
-  const type = req.body.oAuthData["type"]
-  const googleId = payload["sub"]
-  const phoneNumber = cache.keys()[0]
-  const authNumber = req.body.code
-
-  const clientUser = {
-    id: type + googleId,
-    name: req.body.oAuthData["name"],
-    phone: phoneNumber,
-    photo_url: req.body.oAuthData["photoUrl"],
-    id_family: null
-  }
-
-  let result = false
-  if (!phoneNumber)
-    res.status(400).json({ message: "Authentication timed out" })
-  else if (!cache.get(phoneNumber))
-    res.status(400).json({ message: "Authentication number is not entered" })
-  else if (cache.get(phoneNumber) == authNumber)
-    result = true
-  else
-    res.status(400).json({ message: "Wrong request: Not verified access" })
-
-  if (result) {
-    try {
-      const jwtToken = await jwt.sign(clientUser)
-      const userData = {
-        token: jwtToken.token,
-        userId: clientUser.id,
-        familyId: clientUser.id_family
-      }
-      new User(clientUser).save()
-      res.status(200).json(userData)
-    } catch (err) {
-      res.status(400).json({ message: err })
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: req.body.oAuthData["oAuthToken"],
+      audience: process.env.GOOGLE_CLIENT_ID
+    })
+    const payload = ticket.getPayload()
+  
+    const type = req.body.oAuthData["type"]
+    const googleId = payload["sub"]
+    const phoneNumber = req.body.phone
+    const authNumber = req.body.code
+    const clientUser = {
+      id: type + googleId,
+      name: req.body.oAuthData["name"],
+      phone: phoneNumber,
+      photo_url: req.body.oAuthData["photoUrl"],
+      family_id: null
     }
-  }
-  else {
-    res.status(400).json({ message: "Sucessfully verified" })
+  
+    if (!cache.keys()[0])
+      return res.status(400).json({ message: "Authentication timed out" })
+    else if (!cache.get(phoneNumber))
+      return res.status(400).json({ message: "Authentication number is not entered" })
+    else if (cache.get(phoneNumber) == authNumber)
+      console.log("Message authentication passed")
+    else
+      return res.status(400).json({ message: "Wrong request: Not verified access" })
+  
+    const user = await new User(clientUser).save()
+    if (!user.id)
+      return res.status(400).json({ message: "Error occured in DB" })
+    
+    const jwtToken = await jwt.sign(clientUser)
+    if (!jwtToken)
+      return res.status(400).json({ message: "Cannot create jwt token" })
+    
+    return res.status(200).json()
+  } catch (err) {
+    console.log(err)
+    return res.status(400).json({ message: err })
   }
 }
 
 exports.signIn = async function (req, res){
   console.log("signIn:\n", req.body)
 
-  const token = req.body["oAuthToken"]
-  const ticket = await client.verifyIdToken({
-    idToken: token,
-    audience: process.env.GOOGLE_CLIENT_ID
-  })
-  const payload = ticket.getPayload()
-
-  const type = req.body["type"]
-  const googleId = payload["sub"]
-  
-  const clientUser = {
-    id: type + googleId,
-  }
-
   try {
-    const user = await User.findOne({ id: clientUser.id })
-    if (!user) {
-      res.status(401).json("User\'s ID is not in DB")
-    } else {
-      const jwtToken = await jwt.sign(clientUser)
-      const userData = {
-        token: jwtToken.token,
-        userId: clientUser.id,
-        familyId: clientUser.id_family
-      }
-      res.status(200).json(userData)
+    const ticket = await client.verifyIdToken({
+      idToken: req.body.oAuthData["oAuthToken"],
+      audience: process.env.GOOGLE_CLIENT_ID
+    })
+    const payload = ticket.getPayload()
+
+    const type = req.body.oAuthData["type"]
+    const googleId = payload["sub"]
+    const clientUser = {
+      id: type + googleId,
     }
+  
+    const user = await User.findOne({ id: clientUser.id })
+    if (!user)
+      return res.status(401).json("Invalid user ID")
+    
+    const fcmToken = req.body.fcmToken
+    if (!fcmToken)
+      return res.status(400).json({ message: "No FCM token" })
+
+    const jwtToken = await jwt.sign(user)
+    if (!jwtToken)
+      return res.status(400).json({ message: "Cannot create jwt token" })
+
+    const oldFcmToken = await Fcm.deleteOne({ fcm_token: fcmToken })
+    if (!oldFcmToken)
+      return res.status(400).json({ message: "Cannot delete FCM token" })
+
+    const fcmDocument = await Fcm.findOneAndUpdate(
+      { user_id: user.id },
+      { $set: { fcm_token: fcmToken } },
+      { upsert: true, new: true }
+    )
+    if (!fcmDocument)
+      return res.status(400).json({ message: "Cannot create fcm token" })
+    
+    const userData = {
+      id: user.id,
+      name: user.name,
+      phone: user.phone,
+      photoUrl: user.photo_url
+    }
+    const sendData = {
+      user: userData,
+      token: jwtToken.token,
+      familyId: user.family_id
+    }
+
+    return res.status(200).json(sendData)
+
   } catch (err) {
-    res.status(401).json({ message: err })
+    console.log(err)
+    return res.status(401).json({ message: err })
   }
 }
 
